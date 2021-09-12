@@ -1,0 +1,21 @@
+ENVI
+description = {
+  File Resize Result, x resize factor: 1.000000, y resize factor: 1.000000.
+  [Mon Jul 06 10:19:12 2020]}
+samples = 829
+lines   = 677
+bands   = 1
+header offset = 0
+file type = ENVI Standard
+data type = 12
+interleave = bsq
+sensor type = Unknown
+byte order = 0
+x start = 1121
+y start = 1260
+map info = {Polar Stereographic, 1.0000, 1.0000, -2442680.2818, 1168732.1304, 3.9156318584e-001, 3.8159440915e-001, WGS-84, units=Meters}
+projection info = {31, 6378137.0, 6356752.3, -71.000000, 0.000000, 0.0, 0.0, WGS-84, Polar Stereographic, units=Meters}
+coordinate system string = {PROJCS["Polar Stereographic",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Stereographic_South_Pole"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Standard_Parallel_1",-71.0],UNIT["Meter",1.0]]}
+wavelength units = Unknown
+band names = {
+ Resize (Band 1:WV3Pan_Sample.tif)}
