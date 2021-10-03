@@ -5,6 +5,7 @@
 import numpy as np
 import gc
 import warnings
+import skimage
 from skimage import filters, morphology, feature, img_as_ubyte, segmentation, data, color
 from skimage.filters import rank
 from skimage.morphology import watershed, disk
@@ -79,9 +80,10 @@ def segment_image2(input_data, smooth, gradient_cut, merging_cut, image_type=Fal
 #        low_threshold = 0.05 * 255     ## Needs to be checked
 #        gauss_sigma = 1
 #        feature_separation = 1
+
         band_list = [0, 0, 0]
         
-        img = np.stack((np.squeeze(input_data),)*3, axis=-1)  # Squeeze (1,199,199)->(199,199)
+        img = input_data[:, :, 0]  # Squeeze (1,199,199)->(199,199)
 #        high_threshold = 200   ## Needs to be checked
 #        low_threshold = 20
         
@@ -91,7 +93,6 @@ def segment_image2(input_data, smooth, gradient_cut, merging_cut, image_type=Fal
         
 
     else:   #image_type == 'srgb'
-
         band_list = [0, 1, 2]
         img = np.transpose(input_data,(1,2,0))  # The canonical way of switching dimensions
         
@@ -107,6 +108,7 @@ def segment_image2(input_data, smooth, gradient_cut, merging_cut, image_type=Fal
     
 
     if np.amax(segmented_data) >= 1:
+
         g = graph.rag_mean_color(img, segmented_data)
         segmented_merge_data = graph.merge_hierarchical(segmented_data, g, thresh=merging_cut, rag_copy=False,
                                    in_place_merge=True,
@@ -134,8 +136,9 @@ def watershed_transformation(image_data, band_list, smooth, gradient_cut):
         # We just need the dimensions from one band
         blankimg=np.zeros(np.shape(image_data[0]))
         return blankimg, blankimg, blankimg  # Handel blank image
-        
-    denoised = rank.median(image_data[0], disk(smooth))   # Modified 12/4/2020
+
+
+    denoised = rank.median(image_data[:, :, 0], disk(smooth))   # Modified 12/4/2020
 
     # find continuous region (low gradient -
     # where less than 10 for this image) --> markers
@@ -184,7 +187,7 @@ def watershed_transformation(image_data, band_list, smooth, gradient_cut):
     
 
     # process the watershed on gradient layer
-    im_watersheds = watershed(gradient, markers) 
+    im_watersheds = skimage.segmentation.watershed(gradient, markers) 
 
     gc.collect()
     #return im_watersheds

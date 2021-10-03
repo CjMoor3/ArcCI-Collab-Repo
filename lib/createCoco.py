@@ -1,4 +1,5 @@
 import json
+import h5py
 
 ##############################################################
 ## createCoco.py                                            ##
@@ -38,16 +39,22 @@ class createCOCO:
                anoId=None, anoImg=None, anoCatId=None, anoSeg=None, area=None, segList=None, isCrowd=None,          ## Parameters for getAnnotation()
                catId=None, catName=None, category=None                                                              ## Parameters for getCategories()
                ):
-        
         masterDict = {'info': self.getInfo(year, version, desc, contrib, url, dateCrea),
                       'image': self.getImage(imgId, width, height, imgFileName, imgLic, flckrUrl, dateCap),
                       'license': self.getLicense(licId, licName, licUrl),
                       'annotation': self.getAnnotation(anoId, anoImg, anoCatId, anoSeg, area, segList, isCrowd),
                       'categories': self.getCategories(catId, catName, category)}
-
         with open(fileName, 'w') as jsonObj:
             json.dump(masterDict, jsonObj, indent=4)
 
     def fromCOCO(self, filePath):
-        localDictionary = json.load(filePath)
-        return localDictionary
+        with open(filePath, 'r') as fileContent:
+            localDict = json.load(fileContent)
+        return localDict
+
+    def toH5(self, inputFilePath, outputFilePath):
+        localDictionary = json.load(inputFilePath)
+        h5File = h5py.File(outputFilePath)
+        for i, b in localDictionary:
+            h5File.create_dataset(i, data=b)
+        h5File.close()
