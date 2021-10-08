@@ -9,23 +9,53 @@ import h5py
 ##############################################################
 
 class createCOCO:
-    def getAnnotation(self, anoId=None, anoImg=None, anoCatId=None, anoSeg=None, area=None, segList=None, isCrowd=None):
-        retAnnotation = {'id': anoId, 'image_id': anoImg, 'category_id': anoCatId, 'segmentation': anoSeg,
-                         'area': area,'bbox': [segList], 'iscrowd': isCrowd}
-        return retAnnotation
-
-    def getCategories(self, catId=None, catName=None, category=None):
-        retCategories = {'id': [catId], 'name': catName, 'supercategory': category}
-        return retCategories
-    
     def toCOCO(self, fileName,
-               anoId=None, anoImg=None, anoCatId=None, anoSeg=None, area=None, segList=None, isCrowd=None,          ## Parameters for getAnnotation()
-               catId=None, catName=None, category=None                                                              ## Parameters for getCategories()
-               ):
-        masterDict = {'annotation': self.getAnnotation(anoId, anoImg, anoCatId, anoSeg, area, segList, isCrowd),
-                      'categories': self.getCategories(catId, catName, category)}
-        with open(fileName, 'w') as jsonObj:
-            json.dump(masterDict, jsonObj, indent=4)
+               imgName=None, anoImg=None, area=None, segList=None,        
+               category=None, trainingData=None):
+        #trainingData[1] #counts
+        #print(fileName)
+        b = 0
+        for i in trainingData:
+            b += 1
+            filePath = fileName + "." + str(b) + '.json'
+            counts = i[0]
+            segID = i[1]
+            cat = i[2]
+            if cat == 0:
+                name = 'Water'
+            elif cat == 1:
+                name = 'Thin Ice'
+            elif cat == 2:
+                name = 'Shadow'
+            elif cat == 3:
+                name = 'Sub Ice'
+            elif cat == 4:
+                name = 'Ice/Snow'
+            elif cat == 5:
+                name = 'Melt Pond'
+            else:
+                name = 'No category'
+            masterDict = {'annotation':
+                                        {
+                                        'id': segID,    ## Segment ID
+                                        'image_id': imgName, ## Image Name
+                                        'category_id': cat,
+                                        'segmentation': {
+                                                        'size': (256, 256),
+                                                        'counts': counts
+                                                        },
+                                        'area': area,
+                                        'bbox': segList,
+                                        'isCrowd': 1
+                                        },
+                          'categories':
+                                        {
+                                        'id': cat,
+                                        'name': name,
+                                        'supercategory': None
+                                        }}
+            with open(filePath, 'w') as jsonObj:
+                json.dump(masterDict, jsonObj, indent=4)
 
     def fromCOCO(self, filePath):
         with open(filePath, 'r') as fileContent:
@@ -34,7 +64,7 @@ class createCOCO:
 
     def appendCOCO(self, filePath, 
                 anoId=None, anoImg=None, anoCatId=None, anoSeg=None, area=None, segList=None, isCrowd=None,
-                catId=None, catName=None, category=None):
+                catId=None, catName=None, category=None, trainingData = None):
         jsonObj = open(filePath, 'r')
         bufferDict = json.load(jsonObj)
         jsonObj.close()
