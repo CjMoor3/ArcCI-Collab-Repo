@@ -1,5 +1,7 @@
 import json
+from typing import Any
 import h5py
+import os
 
 ##############################################################
 ## createCoco.py                                            ##
@@ -9,60 +11,76 @@ import h5py
 ##############################################################
 
 class createCOCO:
+    def checkDict(self, value1, value2, dict):
+        if not any(d['id'] == value1 and d['image_id'] == value2 for d in dict):
+                return True   
+        else:
+            return False
+
     def toCOCO(self, fileName,
-               imgName=None, imgHeight=None, imgWidth=None, anoImg=None, area=None, segList=None,        
+               imgName=None, anoImg=None, area=None, segList=None,        
                category=None, trainingData=None):
-        #trainingData[1] #counts
-        #print(fileName)
-        b = 0
-        for i in trainingData:
-            b += 1
-            filePath = fileName + "." + str(b) + '.json'
-            counts = i[0]
-            segID = i[1]
-            cat = i[2]
-            if cat == 0:
-                name = 'Water'
-            elif cat == 1:
-                name = 'Thin Ice'
-            elif cat == 2:
-                name = 'Shadow'
-            elif cat == 3:
-                name = 'Sub Ice'
-            elif cat == 4:
-                name = 'Ice/Snow'
-            elif cat == 5:
-                name = 'Melt Pond'
-            else:
-                name = 'No category'
-            masterDict = {"images": 
+        if os.path.exists(fileName) == False:
+            masterDict = {'annotation': [],
+                         'categories':
+                                        [
                                         {
-                                        "file_name": imgName,
-                                        "height": 427,
-                                        "width": 640, #!TODO: pass image size ratio from gui to coco (mostly to check that it is correct.)
-                                        #"id": 397133 #!TODO: create image ID naming funciton
+                                        'id': 0,
+                                        'name': 'Water',
+                                        'supercategory': 'geo'
                                         },
-                        'annotation':
                                         {
-                                        'id': segID,    ## Segment ID
-                                        #'image_id': imgName, ## Image Name
-                                        'category_id': cat,
-                                        'segmentation': {
-                                                        'size': (256, 256),
-                                                        'counts': counts
-                                                        },
-                                        'area': area,
-                                        'bbox': segList,
-                                        'isCrowd': 1
+                                        'id': 1,
+                                        'name': 'Thin Ice',
+                                        'supercategory': 'geo'
                                         },
-                          'categories':
                                         {
-                                        'id': cat,
-                                        'name': name,
-                                        'supercategory': None
-                                        }}
-            with open(filePath, 'w') as jsonObj:
+                                        'id': 2,
+                                        'name': 'Shadow',
+                                        'supercategory': 'geo'
+                                        },
+                                        {
+                                        'id': 3,
+                                        'name': 'Shadow',
+                                        'supercategory': 'geo'
+                                        },
+                                        {
+                                        'id': 4,
+                                        'name': 'Ice/Snow',
+                                        'supercategory': 'geo'
+                                        },
+                                        {
+                                        'id': 5,
+                                        'name': 'Melt Pond',
+                                        'supercategory': 'geo'
+                                        }
+                                        ]
+                            }
+            with open(fileName, 'w') as jsonObj:
                 json.dump(masterDict, jsonObj, indent=4)
+
+        elif os.path.exists(fileName) == True:
+                masterDict = self.fromCOCO(fileName)
+                for i in trainingData:
+                    counts = i[0]
+                    segID = i[1]
+                    cat = i[2]
+                    segIdStatus = self.checkDict(i[1], imgName, masterDict['annotation'])
+                    if cat != None and segIdStatus: # and self.checkDict(segID, masterDict['annotation']):
+                        masterDict['annotation'].append({
+                            'id': segID,
+                            'image_id': imgName,
+                            'category_id': cat,
+                            'segmentation': {
+                                            'size': (256, 256),
+                                            'counts': counts
+                                        },
+                            'area': area,
+                            'bbox': segList,
+                            'iscrowd': 1
+                        })
+                with open(fileName, 'w') as jsonObj:
+                    json.dump(masterDict, jsonObj, indent=4)
 
     def fromCOCO(self, filePath):
         with open(filePath, 'r') as fileContent:
@@ -87,3 +105,20 @@ class createCOCO:
         for i, b in localDictionary:
             h5File.create_dataset(i, data=b)
         h5File.close()
+
+
+
+
+
+
+
+
+
+
+    def appendCOCO(self, filePath):
+        masterDict = self.fromCOCO(filePath)
+
+        transferDict = masterDict["annotation"]
+
+        
+
