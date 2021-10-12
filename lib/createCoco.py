@@ -10,7 +10,7 @@ import h5py
 
 class createCOCO:
     def toCOCO(self, fileName,
-               imgName=None, anoImg=None, area=None, segList=None,        
+               imgName=None, imgHeight=None, imgWidth=None, anoImg=None, area=None, segList=None,        
                category=None, trainingData=None):
         #trainingData[1] #counts
         #print(fileName)
@@ -35,10 +35,17 @@ class createCOCO:
                 name = 'Melt Pond'
             else:
                 name = 'No category'
-            masterDict = {'annotation':
+            masterDict = {"images": 
+                                        {
+                                        "file_name": imgName,
+                                        "height": 427,
+                                        "width": 640, #!TODO: pass image size ratio from gui to coco (mostly to check that it is correct.)
+                                        #"id": 397133 #!TODO: create image ID naming funciton
+                                        },
+                        'annotation':
                                         {
                                         'id': segID,    ## Segment ID
-                                        'image_id': imgName, ## Image Name
+                                        #'image_id': imgName, ## Image Name
                                         'category_id': cat,
                                         'segmentation': {
                                                         'size': (256, 256),
