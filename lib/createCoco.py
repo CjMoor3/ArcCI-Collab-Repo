@@ -1,5 +1,4 @@
 import json
-from typing import Any
 import h5py
 import os
 
@@ -11,17 +10,24 @@ import os
 ##############################################################
 
 class createCOCO:
-    def checkDict(self, value1, value2, dict):
+    def checkAnnotation(self, value1, value2, dict):
         if not any(d['id'] == value1 and d['image_id'] == value2 for d in dict):
-                return True   
+                return True
+        else:
+            return False
+
+    def checkImage(self, value, dict):
+        if not any(d['id'] == value for d in dict):
+            return True
         else:
             return False
 
     def toCOCO(self, fileName,
-               imgName=None, anoImg=None, area=None, segList=None,        
-               category=None, trainingData=None):
+               imgName=None, imgId=None, area=None, segList=None,        
+               trainingData=None, imgHeight=None, imgWidth=None):
         if os.path.exists(fileName) == False:
-            masterDict = {'annotation': [],
+            masterDict = {'images': [],
+                         'annotation': [],
                          'categories':
                                         [
                                         {
@@ -61,18 +67,26 @@ class createCOCO:
 
         elif os.path.exists(fileName) == True:
                 masterDict = self.fromCOCO(fileName)
+                imageCheck = self.checkImage(imgId, masterDict['images'])
+                if imageCheck:
+                    masterDict['images'].append({
+                        'file_name': imgName,
+                        'height': imgHeight,
+                        'width': imgWidth,
+                        'id': imgId
+                    })
                 for i in trainingData:
                     counts = i[0]
                     segID = i[1]
                     cat = i[2]
-                    segIdStatus = self.checkDict(i[1], imgName, masterDict['annotation'])
+                    segIdStatus = self.checkAnnotation(i[1], imgName, masterDict['annotation'])
                     if cat != None and segIdStatus: # and self.checkDict(segID, masterDict['annotation']):
                         masterDict['annotation'].append({
                             'id': segID,
-                            'image_id': imgName,
+                            'image_id': imgId,
                             'category_id': cat,
                             'segmentation': {
-                                            'size': (256, 256),
+                                            'size': (imgWidth, imgHeight),
                                             'counts': counts
                                         },
                             'area': area,
@@ -87,38 +101,11 @@ class createCOCO:
             localDict = json.load(fileContent)
         return localDict
 
-    def appendCOCO(self, filePath, 
-                anoId=None, anoImg=None, anoCatId=None, anoSeg=None, area=None, segList=None, isCrowd=None,
-                catId=None, catName=None, category=None, trainingData = None):
-        jsonObj = open(filePath, 'r')
-        bufferDict = json.load(jsonObj)
-        jsonObj.close()
-        bufferDict['annotation'] = self.getAnnotation(anoId, anoImg, anoCatId, anoSeg, area, segList, isCrowd)
-        bufferDict['categories'] = self.getCategories(catId, catName, category)
-        with open(filePath, 'w+') as jsonObj:
-            json.dump(bufferDict, jsonObj, indent=4)
-            jsonObj.close()
-
     def toH5(self, inputFilePath, outputFilePath):
         localDictionary = json.load(inputFilePath)
         h5File = h5py.File(outputFilePath)
         for i, b in localDictionary:
             h5File.create_dataset(i, data=b)
         h5File.close()
-
-
-
-
-
-
-
-
-
-
-    def appendCOCO(self, filePath):
-        masterDict = self.fromCOCO(filePath)
-
-        transferDict = masterDict["annotation"]
-
         
 
