@@ -10,3 +10,4 @@ cropImages/
 cropImages/*
 pics/*
 training_datasets/
+.vscode/

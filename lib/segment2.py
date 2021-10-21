@@ -107,15 +107,15 @@ def segment_image2(input_data, smooth, gradient_cut, merging_cut, image_type=Fal
 #    img = np.stack((WV3,)*3, axis=-1) #axis=-1 new dimension will be the last dimension
     
 
-    if np.amax(segmented_data) >= 1:
+    # if np.amax(segmented_data) >= 1:
 
-        g = graph.rag_mean_color(img, segmented_data)
-        segmented_merge_data = graph.merge_hierarchical(segmented_data, g, thresh=merging_cut, rag_copy=False,
-                                   in_place_merge=True,
-                                   merge_func=merge_mean_color,
-                                   weight_func=_weight_mean_color)
+    #     g = graph.rag_mean_color(img, segmented_data)
+    #     segmented_merge_data = graph.merge_hierarchical(segmented_data, g, thresh=merging_cut, rag_copy=False,
+    #                                in_place_merge=True,
+    #                                merge_func=merge_mean_color,
+    #                                weight_func=_weight_mean_color)
     
-        return segmented_merge_data
+    #     return segmented_merge_data
     
     return segmented_data
 
