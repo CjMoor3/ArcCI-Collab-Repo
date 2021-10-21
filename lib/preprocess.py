@@ -10,6 +10,7 @@ import datetime
 import subprocess
 import numpy as np
 import matplotlib.image as mimg
+import pyximport; pyximport.install(pyximport=True)
 from skimage.measure import block_reduce
 from lib import utils, rescale_intensity
 
