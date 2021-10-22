@@ -1,5 +1,5 @@
 .ipynb_checkpoints/
-.ipyb_checkpoints/*
+.ipynb_checkpoints/*
 __pycache__/
 __pycache__/*
 lib/__pycache__/
