@@ -12,3 +12,5 @@ pics/*
 training_datasets/
 .vscode/
 lib/__pycache__/createCoco.cpython-37.pyc
+MaskedImages/
+MaskedImages/*
