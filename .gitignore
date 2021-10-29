@@ -4,13 +4,16 @@ __pycache__/
 __pycache__/*
 lib/__pycache__/
 lib/__pycache__/*
+lib/__pycache__/createCoco.cpython-37.pyc
+# All of the above files are cache files generated at runtime and don't need to be tracked
 TDSCOCO/
 TDSCOCO/*
 cropImages/
 cropImages/*
-pics/*
-training_datasets/
-.vscode/
-lib/__pycache__/createCoco.cpython-37.pyc
 MaskedImages/
 MaskedImages/*
+pics/*
+# The above files are directories to be used by the GUI for input and output
+.vscode/
+debugScripts/
+# The above files are local files
