@@ -6,13 +6,17 @@ import os
 import math
 import json
 import numpy
+from tkinter import filedialog as fd
 
 def hexToRGB(hexCode):
     return tuple(int(hexCode.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
 
 class DataManager():
     def __init__(self):
-        self.fileName = os.path.relpath('./TDSCOCO/COCOTDS.json')
+        self.fileName = ""
+        while self.fileName == "":
+            filetypes = [('json files', '*.json')]
+            self.fileName = fd.askopenfilename(title="Open TDS data file", filetypes=filetypes)
         self.imageDictionary = {}
         self.currentImgId = self.fromJSON(self.fileName)['images'][0]['id']
 
@@ -84,12 +88,13 @@ class DataManager():
                 for x in range(booleanSize[0]):
                     if booleanMask[x, y]:
                         categoryArray[x, y] = count["category_id"]
-
-        for x in range(booleanSize[1]):
-            for y in range(booleanSize[0]):
+                        
+                        
+        for y in range(booleanSize[0]):
+            for x in range(booleanSize[1]):
                 colorList = hexToRGB(segmentColors[int(categoryArray[x, y])])
                 for c, color in enumerate(colorList):
-                    array[y, x, c] = color
+                    array[y, (x + y) % 256, c] = color
 
         array = array.astype(dtype=numpy.uint8)
         return array
