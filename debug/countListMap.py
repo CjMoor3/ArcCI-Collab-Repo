@@ -176,7 +176,7 @@ class Buttons(tkinter.Frame):
                 index = i-1
 
         self.parent.data.currentImgId = self.imgIDS[index % len(self.imgIDS)]
-        self.parent.data.imageMaskArray = self.parent.data.manageData()
+        self.parent.data.imageMaskArray = self.parent.data.loadRLE()
         self.parent.ImageDisplay.updateImages()
 
     def cycleNext(self):
@@ -185,7 +185,7 @@ class Buttons(tkinter.Frame):
                 index = i+1
 
         self.parent.data.currentImgId = self.imgIDS[index % len(self.imgIDS)]
-        self.parent.data.imageMaskArray = self.parent.data.manageData()
+        self.parent.data.imageMaskArray = self.parent.data.loadRLE()
         self.parent.ImageDisplay.updateImages()
         
     def openDataset(self):
