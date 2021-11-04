@@ -10,23 +10,27 @@ import json
 import numpy
 from tkinter import filedialog as fd
 
-def hexToRGB(hexCode):
-    return tuple(int(hexCode.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
+
 
 class colors:
     def __init__(self):
-        self.darkMode = ['#36393F', '#2F3136', 'white','#292B2F']
+        self.darkMode = ['#36393F', '#2F3136', 'white', '#292B2F']
 
 class DataManager():
     def __init__(self):
-        self.fileName = ""
-        while self.fileName == "":
-            filetypes = [('json files', '*.json')]
-            self.fileName = fd.askopenfilename(title="Open TDS data file", filetypes=filetypes)
+        filetypes = [('json files', '*.json')]
+        self.fileName = fd.askopenfilename(title="Open TDS data file", filetypes=filetypes)
         self.imageDictionary = {}
-        self.currentImgId = self.fromJSON(self.fileName)['images'][0]['id']
+
+        if self.fileName == ():
+            quit()
+        else:
+            self.currentImgId = self.fromJSON(self.fileName)['images'][0]['id']
 
         self.imageMaskArray = self.loadRLE()
+    
+    def hexToRGB(self, hexCode):
+        return tuple(int(hexCode.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
 
     def fromJSON(self, fileName):
         with open(fileName, "r") as jsonObj:
@@ -55,7 +59,7 @@ class DataManager():
 
         masterDict = self.fromJSON(self.fileName)
 
-        subDict = [] #masterDict["annotation"]
+        subDict = [] # masterDict["annotation"]
         subDict.clear()
 
         for i in masterDict['annotation']:
@@ -95,7 +99,7 @@ class DataManager():
                         
         for y in range(booleanSize[0]):
             for x in range(booleanSize[1]):
-                colorList = hexToRGB(segmentColors[int(categoryArray[x, y])])
+                colorList = self.hexToRGB(segmentColors[int(categoryArray[x, y])])
                 for c, color in enumerate(colorList):
                     array[y, (x + y) % 256, c] = color
 
@@ -189,9 +193,7 @@ class Buttons(tkinter.Frame):
         self.parent.ImageDisplay.updateImages()
         
     def openDataset(self):
-        fileName = ""
-        while fileName == "":
-            fileName = fd.askopenfilename(title='Open TDS File', filetypes=[("JSON Files", "*.json")])
+        fileName = fd.askopenfilename(title='Open TDS File', filetypes=[("JSON Files", "*.json")])
         self.parent.data.fileName = fileName
 
 class WindowClass(tkinter.Frame):
