@@ -10,6 +10,8 @@ import json
 import numpy
 from tkinter import filedialog as fd
 
+from skimage import color
+
 
 
 class colors:
@@ -20,7 +22,11 @@ class DataManager():
     def __init__(self):
         filetypes = [('json files', '*.json')]
         self.fileName = fd.askopenfilename(title="Open TDS data file", filetypes=filetypes)
+        self.imgDir = None
         self.imageDictionary = {}
+        self.c = colors()
+
+        self.imagePlot = None
 
         if self.fileName == ():
             quit()
@@ -50,9 +56,14 @@ class DataManager():
                         self.imageDictionary[i['id']] = k
 
     def loadImage(self):
-        imgName = os.path.relpath('./cropImages/img-' + self.currentImgId + '.jpg')
-        imagePlot = mtpltimg.imread(imgName)
-        return imagePlot
+        print('yes')
+        if self.imgDir == None:
+            imagePlot = numpy.dstack(self.hexToRGB(self.c.darkMode[3]))
+            self.imagePlot = imagePlot
+        else:
+            imgName = os.path.join(self.imgDir,os.path.relpath('./img-' + self.currentImgId + '.jpg'))
+            imagePlot = mtpltimg.imread(imgName)
+            self.imagePlot = imagePlot
                     
     def loadRLE(self):
         segmentColors = ['#71b8eb', '#b1ddfc', '#707070', '#8d56ba', "#fff5a8", "#d97796"]
@@ -126,6 +137,7 @@ class ImageDisplay(tkinter.Frame):
         self.updateImages()
 
     def updateImages(self):
+        self.parent.data.loadImage()
         leftDisplay = self.graph.add_subplot(1,2,1)
         leftDisplay.imshow(self.parent.data.imageMaskArray)
         leftDisplay.tick_params(axis='both',  # changes apply to the x-axis
@@ -138,7 +150,7 @@ class ImageDisplay(tkinter.Frame):
                        labelbottom=False)
 
         rightDisplay = self.graph.add_subplot(1,2,2)
-        rightDisplay.imshow(self.parent.data.loadImage())
+        rightDisplay.imshow(self.parent.data.imagePlot)
         rightDisplay.tick_params(axis='both', # changes apply to the x-axis
                        which='both',          # both major and minor ticks are affected
                        bottom=False,          # ticks along the bottom edge are off
@@ -164,11 +176,14 @@ class Buttons(tkinter.Frame):
         nextButton = tkinter.Button(self, text=">", height=2, width=4, highlightthickness=0, fg=c.darkMode[2], bg=c.darkMode[1], command=lambda: self.cycleNext())
         nextButton.grid(row=0, sticky='nse', padx= (65, 20), pady=(0, 10))
 
+        idLabel = tkinter.Label(self, text="Current Image ID: "+ self.parent.data.currentImgId, fg=c.darkMode[2], bg=c.darkMode[1])
+        idLabel.grid(row=0, column=1, columnspan=2, pady=(0,10), padx=(0,260))
+
+        imgDirButton = tkinter.Button(self, text="Open Image Directory", highlightthickness=0, fg=c.darkMode[2], bg=c.darkMode[1], command=lambda: self.openImgDir())
+        imgDirButton.grid(row=0, column=1, sticky='nse', pady=(0, 10), padx=(0, 100))
+
         openButton = tkinter.Button(self, text="Open Dataset", highlightthickness=0, fg=c.darkMode[2], bg=c.darkMode[1],command=lambda: self.openDataset())
         openButton.grid(row=0, column=1, sticky='nse', pady=(0,10), padx=(555,0))
-
-        idLabel = tkinter.Label(self, text="Current Image ID: "+ self.parent.data.currentImgId, fg=c.darkMode[2], bg=c.darkMode[1])
-        idLabel.grid(row=0, column=1, pady=(0,10), padx=(0,150))
 
         self.imgIDS = []
         for k in self.parent.data.imageDictionary:
@@ -195,6 +210,12 @@ class Buttons(tkinter.Frame):
     def openDataset(self):
         fileName = fd.askopenfilename(title='Open TDS File', filetypes=[("JSON Files", "*.json")])
         self.parent.data.fileName = fileName
+        self.parent.ImageDisplay.updateImages()
+
+    def openImgDir(self):
+        imgDir = fd.askdirectory(title="Enter Directory Containing Segmented Images")
+        self.parent.data.imgDir = imgDir
+        self.parent.ImageDisplay.updateImages()
 
 class WindowClass(tkinter.Frame):
     def __init__(self, parent):            
