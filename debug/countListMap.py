@@ -1,6 +1,5 @@
 import tkinter
-import matplotlib
-import matplotlib.pyplot as plt
+from tkinter import filedialog as fd
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.image as mtpltimg
@@ -8,11 +7,6 @@ import os
 import math
 import json
 import numpy
-from tkinter import filedialog as fd
-
-from skimage import color
-
-
 
 class colors:
     def __init__(self):
@@ -56,7 +50,6 @@ class DataManager():
                         self.imageDictionary[i['id']] = k
 
     def loadImage(self):
-        print('yes')
         if self.imgDir == None:
             imagePlot = numpy.dstack(self.hexToRGB(self.c.darkMode[3]))
             self.imagePlot = imagePlot
@@ -241,6 +234,5 @@ def main():
 
     root.resizable(False, False)
     root.mainloop()
-# If you put root.destroy() here, it will cause an error if the window is
-# closed with the window manager.
+
 main()
