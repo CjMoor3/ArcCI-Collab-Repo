@@ -13,9 +13,10 @@ class colors:
         self.darkMode = ['#36393F', '#2F3136', 'white', '#292B2F']
 
 class DataManager():
-    def __init__(self):
+    def __init__(self, parent):
         filetypes = [('json files', '*.json')]
         self.fileName = fd.askopenfilename(title="Open TDS data file", filetypes=filetypes)
+        self.parent = parent
         self.imgDir = None
         self.imageDictionary = {}
         self.c = colors()
@@ -36,6 +37,27 @@ class DataManager():
         with open(fileName, "r") as jsonObj:
             returnDict = json.load(jsonObj)
             return returnDict
+
+    def deleteImgData(self):
+        masterDict = self.fromJSON(self.fileName)
+
+        # Loop checking for images with the right ID to be deleted and deleting them
+        for i in masterDict['images']:
+            if i['id'] == self.currentImgId:
+                masterDict['images'].remove(i)
+
+        # Loop to remove all segment data with matching imgID
+        for i in reversed(masterDict['annotation']):
+            if i['image_id'] == self.currentImgId:
+                masterDict['annotation'].remove(i)
+
+        # Save changes to the dataset
+        with open(self.fileName, 'w') as outFile:
+            json.dump(masterDict, outFile, indent=4)
+            outFile.close()
+
+        self.imageDictionary.clear()
+        self.getImgList()
 
     def getImgList(self):
         masterDict = self.fromJSON(self.fileName)
@@ -99,8 +121,7 @@ class DataManager():
                 for x in range(booleanSize[0]):
                     if booleanMask[x, y]:
                         categoryArray[x, y] = count["category_id"]
-                        
-                        
+                                                
         for y in range(booleanSize[0]):
             for x in range(booleanSize[1]):
                 colorList = self.hexToRGB(segmentColors[int(categoryArray[x, y])])
@@ -155,7 +176,6 @@ class ImageDisplay(tkinter.Frame):
 
         self.canvas.draw()
 
-
 class Buttons(tkinter.Frame):
     def __init__(self, parent):
         tkinter.Frame.__init__(self, parent)
@@ -169,8 +189,11 @@ class Buttons(tkinter.Frame):
         nextButton = tkinter.Button(self, text=">", height=2, width=4, highlightthickness=0, fg=c.darkMode[2], bg=c.darkMode[1], command=lambda: self.cycleNext())
         nextButton.grid(row=0, sticky='nse', padx= (65, 20), pady=(0, 10))
 
-        idLabel = tkinter.Label(self, text="Current Image ID: "+ self.parent.data.currentImgId, fg=c.darkMode[2], bg=c.darkMode[1])
-        idLabel.grid(row=0, column=1, columnspan=2, pady=(0,10), padx=(0,260))
+        self.idLabel = tkinter.Label(self, text="Current Image ID: "+ self.parent.data.currentImgId, fg=c.darkMode[2], bg=c.darkMode[1])
+        self.idLabel.grid(row=0, column=1, columnspan=2, pady=(0,10), padx=(0,300))
+
+        delButton = tkinter.Button(self, text="DEL", highlightthickness=0, fg=c.darkMode[2], bg=c.darkMode[1], command=self.delButtonFunc)
+        delButton.grid(row=0, column=1, sticky='nse', pady=(0,10), padx=(0,250))
 
         imgDirButton = tkinter.Button(self, text="Open Image Directory", highlightthickness=0, fg=c.darkMode[2], bg=c.darkMode[1], command=lambda: self.openImgDir())
         imgDirButton.grid(row=0, column=1, sticky='nse', pady=(0, 10), padx=(0, 100))
@@ -179,24 +202,36 @@ class Buttons(tkinter.Frame):
         openButton.grid(row=0, column=1, sticky='nse', pady=(0,10), padx=(555,0))
 
         self.imgIDS = []
-        for k in self.parent.data.imageDictionary:
-            self.imgIDS.append(k)
  
     def cyclePrev(self):
+        self.imgIDS.clear()
+        for k in self.parent.data.imageDictionary:
+            self.imgIDS.append(k)
+
+        index = 0
+
         for i, v in enumerate(self.imgIDS):
             if v == self.parent.data.currentImgId:
                 index = i-1
 
         self.parent.data.currentImgId = self.imgIDS[index % len(self.imgIDS)]
+        self.idLabel.config(text="Current Image ID: "+self.parent.data.currentImgId)
         self.parent.data.imageMaskArray = self.parent.data.loadRLE()
         self.parent.ImageDisplay.updateImages()
 
     def cycleNext(self):
+        self.imgIDS.clear()
+        for k in self.parent.data.imageDictionary:
+            self.imgIDS.append(k)
+
+        index = 0
+
         for i, v in enumerate(self.imgIDS):
             if v == self.parent.data.currentImgId:
                 index = i+1
 
         self.parent.data.currentImgId = self.imgIDS[index % len(self.imgIDS)]
+        self.idLabel.config(text="Current Image ID: "+self.parent.data.currentImgId)
         self.parent.data.imageMaskArray = self.parent.data.loadRLE()
         self.parent.ImageDisplay.updateImages()
         
@@ -210,13 +245,28 @@ class Buttons(tkinter.Frame):
         self.parent.data.imgDir = imgDir
         self.parent.ImageDisplay.updateImages()
 
+    def delButtonFunc(self):
+        c = colors()
+        confirmWindow = tkinter.Toplevel()
+        confirmWindow.config(bg=c.darkMode[3])
+        confirmWindow.resizable(False,False)
+        
+        confirmLabel = tkinter.Label(confirmWindow, text="Are you sure you want to delete the current image data?", highlightthickness=0, fg=c.darkMode[2], bg=c.darkMode[1])
+        confirmLabel.grid(column=0, row=0, columnspan=2, pady=(10,10), padx=(10,10))
+
+        confirmButton = tkinter.Button(confirmWindow, text="Yes", highlightthickness=0, fg=c.darkMode[2], bg=c.darkMode[1], command=lambda:[self.parent.data.deleteImgData(), confirmWindow.destroy(), self.cycleNext()])
+        confirmButton.grid(column=0, row=1,pady=(10,20), padx=(50,0), sticky='nsw')
+
+        returnButton = tkinter.Button(confirmWindow, text="No", highlightthickness=0, fg=c.darkMode[2], bg=c.darkMode[1] ,command=confirmWindow.destroy)
+        returnButton.grid(column=1, row=1, pady=(10,20),padx=(0,50), sticky='nse')
+
 class WindowClass(tkinter.Frame):
     def __init__(self, parent):            
         tkinter.Frame.__init__(self, parent)
         self.parent = parent
         self.parent.title('COCO Dataset Viewer')
 
-        self.data = DataManager()
+        self.data = DataManager(self)
 
         self.ImageDisplay = ImageDisplay(self)
         self.ImageDisplay.grid(row = 0, column=0)
