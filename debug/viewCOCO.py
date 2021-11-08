@@ -126,7 +126,7 @@ class DataManager():
             for x in range(booleanSize[1]):
                 colorList = self.hexToRGB(segmentColors[int(categoryArray[x, y])])
                 for c, color in enumerate(colorList):
-                    array[y, (x + y) % 256, c] = color
+                    array[y, x, c] = color
 
         array = array.astype(dtype=numpy.uint8)
         return array
