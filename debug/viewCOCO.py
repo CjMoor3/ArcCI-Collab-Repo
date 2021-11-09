@@ -102,7 +102,6 @@ class DataManager():
 
         for i, count in enumerate(subDict):
             booleanSize = count["segmentation"]["size"][0:2]
-            booleanMask = numpy.zeros(booleanSize)
 
             countList = count["segmentation"]["counts"]
             boolean = False
@@ -111,17 +110,13 @@ class DataManager():
                 for b in range(indivCount):
                     xIndex = arrayIndex % booleanSize[0]
                     yIndex = math.floor(arrayIndex / booleanSize[0])
-                    booleanMask[xIndex, yIndex] = boolean
+                    if boolean:
+                        categoryArray[x, y] = count["category_id"]
 
                     arrayIndex += 1
 
                 boolean = not boolean
-
-            for y in range(booleanSize[1]):
-                for x in range(booleanSize[0]):
-                    if booleanMask[x, y]:
-                        categoryArray[x, y] = count["category_id"]
-                                                
+                                              
         for y in range(booleanSize[0]):
             for x in range(booleanSize[1]):
                 colorList = self.hexToRGB(segmentColors[int(categoryArray[x, y])])
