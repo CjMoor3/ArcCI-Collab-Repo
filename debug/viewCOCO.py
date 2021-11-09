@@ -111,7 +111,7 @@ class DataManager():
                     xIndex = arrayIndex % booleanSize[0]
                     yIndex = math.floor(arrayIndex / booleanSize[0])
                     if boolean:
-                        categoryArray[x, y] = count["category_id"]
+                        categoryArray[xIndex, yIndex] = count["category_id"]
 
                     arrayIndex += 1
 
@@ -120,8 +120,7 @@ class DataManager():
         for y in range(booleanSize[0]):
             for x in range(booleanSize[1]):
                 colorList = self.hexToRGB(segmentColors[int(categoryArray[x, y])])
-                for c, color in enumerate(colorList):
-                    array[y, x, c] = color
+                array[y, x] = colorList
 
         array = array.astype(dtype=numpy.uint8)
         return array
