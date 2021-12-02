@@ -75,7 +75,7 @@ def segment_image2(input_data, smooth, gradient_cut, merging_cut, image_type=Fal
  
     #### Define segmentation parameters
 
-    if image_type == 'pan':
+    if image_type == 'pan' or image_type == 'wv02_ms':
 #        high_threshold = 0.15 * 255   ## Needs to be checked
 #        low_threshold = 0.05 * 255     ## Needs to be checked
 #        gauss_sigma = 1
@@ -88,8 +88,6 @@ def segment_image2(input_data, smooth, gradient_cut, merging_cut, image_type=Fal
 #        low_threshold = 20
         
 #        band_list = [0]
-    elif image_type == 'wv02_ms':
-        print ('1')
         
 
     else:   #image_type == 'srgb'
