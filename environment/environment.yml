@@ -1,0 +1,14 @@
+name: testDev
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.7
+  - ipywidgets==7.6.3
+  - matplotlib
+  - jupyter
+  - rasterio==1.0.21
+  - scikit-image==0.18.1
+  - gdal
+  - h5py
+  - cython
