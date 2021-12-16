@@ -1,4 +1,4 @@
-name: testDev
+name: ArcCiGUI
 channels:
   - defaults
 dependencies:
