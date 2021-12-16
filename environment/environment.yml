@@ -1,4 +1,4 @@
-name: ArcCiGUI
+name: ArcGui
 channels:
   - defaults
 dependencies:
