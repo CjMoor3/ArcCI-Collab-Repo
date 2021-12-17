@@ -2,7 +2,7 @@ name: ArcGui
 channels:
   - defaults
 dependencies:
-  - ipykernel==5.2.0
+  - ipykernel==5.1.0
   - python=3.7
   - gdal
   - ipywidgets==7.6.3
