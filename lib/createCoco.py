@@ -21,6 +21,11 @@ class createCOCO:
         else:
             return False
 
+    def toJSON(self, fileName, outDict):
+        with open(fileName, 'w') as outFile:
+            json.dump(outDict, outFile, indent=4)
+            outFile.close()
+
     def toCOCO(self, fileName,
                imgName=None, imgId=None, area=None, segList=None,        
                trainingData=None, imgHeight=None, imgWidth=None):
