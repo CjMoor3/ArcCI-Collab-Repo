@@ -20,6 +20,10 @@ class DataManager():
         self.imgDir = None
         self.imageDictionary = {}
         self.c = colors()
+        
+        # Statistic vars used to display stats about the current dataset
+        self.currentSegCount = 0   
+        self.currentStatDict = {}     
 
         self.imagePlot = None
 
@@ -37,6 +41,27 @@ class DataManager():
         with open(fileName, "r") as jsonObj:
             returnDict = json.load(jsonObj)
             return returnDict
+
+    def countCats(self, listParam):
+        # Count Vars
+        self.currentStatDict.clear()
+        waterCount = thinCount = shadowCount = subCount = snowCount = meltCount = 0
+        
+        for i in listParam:
+            if i == 0:
+                waterCount += 1
+            if i == 1:
+                thinCount += 1
+            if i == 2:
+                shadowCount += 1
+            if i == 3:
+                subCount += 1
+            if i == 4:
+                snowCount += 1
+            if i == 5:
+                meltCount += 1
+                
+        self.currentStatDict[self.currentImgId] = {'water': waterCount, 'thinIce': thinCount, 'shadow': shadowCount, 'subIce': subCount, 'snow': snowCount, 'meltPond': meltCount}
 
     def deleteImgData(self):
         masterDict = self.fromJSON(self.fileName)
@@ -91,6 +116,10 @@ class DataManager():
         for i in masterDict['annotation']:
             if i['image_id'] == self.currentImgId:
                 subDict.append(i)
+                
+        categoryCountList = []
+                
+        self.currentSegCount = len(subDict)
 
         self.getImgList()
 
@@ -102,6 +131,8 @@ class DataManager():
 
         for i, count in enumerate(subDict):
             booleanSize = count["segmentation"]["size"][0:2]
+            
+            categoryCountList.append(count['category_id'])
 
             countList = count["segmentation"]["counts"]
             boolean = False
@@ -116,7 +147,9 @@ class DataManager():
                     arrayIndex += 1
 
                 boolean = not boolean
-                                              
+                
+        self.countCats(categoryCountList)
+                       
         for y in range(booleanSize[0]):
             for x in range(booleanSize[1]):
                 colorList = self.hexToRGB(segmentColors[int(categoryArray[x, y])])
