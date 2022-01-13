@@ -1,19 +1,18 @@
 import tkinter as tk
-from tkinter import Label, filedialog as fd
-from tkinter import font
+from tkinter import filedialog as fd
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.image as mtpltimg
 import os
 import math
 import json
-import numpy
-import webbrowser
+import numpy as np
+import webbrowser as wb
 
 class colors:
     def __init__(self):
         self.darkMode = ['#36393F', '#2F3136', 'white', '#292B2F']
-        self.segmentColors = ['#71b8eb', '#b1ddfc', '#707070', '#8d56ba', "#fff5a8", "#d97796"]
+        self.segmentColors = ['#71b8eb', '#b1ddfc', '#707070', '#8d56ba', "#fff5a8", "#d97796", '#32FF00']
 
 class DataManager():
     def __init__(self, parent):
@@ -32,12 +31,21 @@ class DataManager():
         self.segCols   = []
         self.segPcts   = []
 
+        self.currentSegmentID = None
+        self.currentSegments = []
+        self.currentCatID = None
+        self.idArray = None
+        self.currentImgId = None
+        
         self.imagePlot = None
 
         if self.fileName == ():
             quit()
         else:
-            self.currentImgId = self.fromJSON(self.fileName)['images'][0]['id']
+            try:
+                self.currentImgId = self.fromJSON(self.fileName)['images'][0]['id']
+            except TypeError:
+                pass
 
         self.imageMaskArray = self.loadRLE()
     
@@ -45,10 +53,38 @@ class DataManager():
         return tuple(int(hexCode.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
 
     def fromJSON(self, fileName):
-        with open(fileName, "r") as jsonObj:
-            returnDict = json.load(jsonObj)
-            return returnDict
-
+        try:    
+            with open(fileName, "r") as jsonObj:
+                returnDict = json.load(jsonObj)
+                return returnDict
+        except FileNotFoundError:
+            return
+    
+    def changeCategory(self, catID):
+        masterDict = self.fromJSON(self.fileName)
+        
+        for v in masterDict['annotation']:
+            if v['id'] == self.currentSegmentID and v['image_id'] == self.currentImgId:
+                v['category_id'] = catID
+                
+        with open(self.fileName, 'w') as outFile:
+            json.dump(masterDict, outFile, indent=4)
+            outFile.close()
+            
+    def onClick(self, event):
+        if event.inaxes is not None:
+            axesProps = event.inaxes.properties()
+            
+            x, y = 0, 0
+            
+            if axesProps['label'] == 'DatasetDisplay':
+                x = int(event.xdata)
+                y = int(event.ydata)
+                
+                self.parent.Data.currentSegmentID = int(self.parent.Data.idArray[x, y])
+                
+        self.parent.ImageDisplay.updateImages()
+        
     def countCats(self, listParam):
         # Count Vars
         waterCount = thinCount = shadowCount = subCount = snowCount = meltCount = 0
@@ -85,27 +121,27 @@ class DataManager():
                 if i == 0:
                     segLabels.append('Water')
                     segVals.append(waterCount)
-                    segCols.append('#71b8eb')
+                    segCols.append(self.c.segmentColors[0])
                 if i ==  1:
                     segLabels.append('Thin Ice')
                     segVals.append(thinCount)
-                    segCols.append('#b1ddfc')
+                    segCols.append(self.c.segmentColors[1])
                 if i == 2:
                     segLabels.append('Shadow')
                     segVals.append(shadowCount)
-                    segCols.append('#707070')
+                    segCols.append(self.c.segmentColors[2])
                 if i == 3:
                     segLabels.append('Sub Ice')
                     segVals.append(subCount)
-                    segCols.append('#8d56ba')
+                    segCols.append(self.c.segmentColors[3])
                 if i == 4:
                     segLabels.append('Snow')
                     segVals.append(snowCount)
-                    segCols.append("#fff5a8")
+                    segCols.append(self.c.segmentColors[4])
                 if i == 5:
                     segLabels.append('Melt Pond') 
                     segVals.append(meltCount)
-                    segCols.append("#d97796")
+                    segCols.append(self.c.segmentColors[5])
                     
         waterPct  = (waterCount /self.currentSegCount) * 100
         thinPct   = (thinCount  /self.currentSegCount) * 100
@@ -116,9 +152,9 @@ class DataManager():
         segPcts = [waterPct, thinPct, shadowPct, subPct, snowPct, meltPct]
         
         self.segLabels = segLabels
-        self.segVals  = segVals
-        self.segCols = segCols
-        self.segPcts = segPcts
+        self.segVals   = segVals
+        self.segCols   = segCols
+        self.segPcts   = segPcts
 
     def deleteImgData(self):
         masterDict = self.fromJSON(self.fileName)
@@ -155,7 +191,7 @@ class DataManager():
 
     def loadImage(self):
         if self.imgDir == None:
-            imagePlot = numpy.dstack(self.hexToRGB(self.c.darkMode[3]))
+            imagePlot = np.dstack(self.hexToRGB(self.c.darkMode[3]))
             self.imagePlot = imagePlot
         else:
             imgName = os.path.join(self.imgDir,os.path.relpath('./img-' + self.currentImgId + '.jpg'))
@@ -168,86 +204,101 @@ class DataManager():
         subDict = [] # masterDict["annotation"]
         subDict.clear()
 
-        for i in masterDict['annotation']:
-            if i['image_id'] == self.currentImgId:
-                subDict.append(i)
+        try:
+            for i in masterDict['annotation']:
+                if i['image_id'] == self.currentImgId:
+                    subDict.append(i)
+                    
+            self.currentSegments = []
+            categoryCountList = []
+                    
+            self.currentSegCount = len(subDict)
+
+            self.getImgList()
+
+            arraySize = subDict[0]["segmentation"]["size"]
+            arraySize.append(3)
+
+            array = np.zeros(arraySize)
+            categoryArray = np.zeros(arraySize[0:2])
+            idNumArray = np.zeros(arraySize[0:2])
+
+            for i, count in enumerate(subDict):
+                booleanSize = count["segmentation"]["size"][0:2]
                 
-        categoryCountList = []
+                self.currentSegments.append(count['id'])
                 
-        self.currentSegCount = len(subDict)
+                categoryCountList.append(count['category_id'])
 
-        self.getImgList()
+                countList = count["segmentation"]["counts"]
+                boolean = False
+                arrayIndex = 0
+                for indivCount in countList:
+                    for b in range(indivCount):
+                        xIndex = arrayIndex % booleanSize[0]
+                        yIndex = math.floor(arrayIndex / booleanSize[0])
+                        if boolean:
+                            if count['id'] != self.currentSegmentID:
+                                categoryArray[xIndex, yIndex] = count["category_id"]
+                            elif count['id'] == self.currentSegmentID:
+                                categoryArray[xIndex, yIndex] = 6
+                                self.currentCatID = count['category_id']
+                                
+                            idNumArray[xIndex, yIndex] = count['id']
 
-        arraySize = subDict[0]["segmentation"]["size"]
-        arraySize.append(3)
+                        arrayIndex += 1
 
-        array = numpy.zeros(arraySize)
-        categoryArray = numpy.zeros(arraySize[0:2])
-
-        for i, count in enumerate(subDict):
-            booleanSize = count["segmentation"]["size"][0:2]
+                    boolean = not boolean
+                    
+            self.idArray = idNumArray
+            self.countCats(categoryCountList)
             
-            categoryCountList.append(count['category_id'])
+            for y in range(booleanSize[0]):
+                for x in range(booleanSize[1]):
+                    colorList = self.hexToRGB(self.c.segmentColors[int(categoryArray[x, y])])
+                    array[y, x] = colorList
 
-            countList = count["segmentation"]["counts"]
-            boolean = False
-            arrayIndex = 0
-            for indivCount in countList:
-                for b in range(indivCount):
-                    xIndex = arrayIndex % booleanSize[0]
-                    yIndex = math.floor(arrayIndex / booleanSize[0])
-                    if boolean:
-                        categoryArray[xIndex, yIndex] = count["category_id"]
-
-                    arrayIndex += 1
-
-                boolean = not boolean
-                
-        self.countCats(categoryCountList)
-                       
-        for y in range(booleanSize[0]):
-            for x in range(booleanSize[1]):
-                colorList = self.hexToRGB(self.c.segmentColors[int(categoryArray[x, y])])
-                array[y, x] = colorList
-
-        array = array.astype(dtype=numpy.uint8)
-        return array
+            array = array.astype(dtype=np.uint8)
+            return array
+        except TypeError:
+            return np.dstack(self.hexToRGB(self.c.darkMode[3]))
     
 class ButtonsLeft(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
         self.parent = parent
+        c = colors()
         
-        self.config(bg='#292B2F')
+        self.config(bg=c.darkMode[3])
         
-        navLabel = tk.Label(self, text='Nav <- ->')
+        navLabel = tk.Label(self, text='Nav <- ->', fg=c.darkMode[2], bg=c.darkMode[1],)
         navLabel.grid(row=0, pady=(0,390))
         
-        prevButton = tk.Button(self, text = '<--', height = 2, width=8, highlightthickness=0, command=lambda: self.cycleDataPrev())
+        prevButton = tk.Button(self, text = '<--', height = 2, width=8, highlightthickness=0,fg=c.darkMode[2], bg=c.darkMode[1], command=lambda: self.cycleDataPrev())
         prevButton.grid(row=0, pady=(0,330), padx=(0, 0))
         
-        nextButton = tk.Button(self, text='-->', height = 2, width = 8, highlightthickness=0, command=lambda: self.cycleDataNext())
+        nextButton = tk.Button(self, text='-->', height = 2, width = 8, highlightthickness=0,fg=c.darkMode[2], bg=c.darkMode[1], command=lambda: self.cycleDataNext())
         nextButton.grid(row=0, pady=(0, 260), padx=(0, 0))
         
-        openDatasetButton = tk.Button(self, text='Open\nDataset', height=4, width=8, highlightthickness=0, command=lambda: self.openDataset())
+        openDatasetButton = tk.Button(self, text='Open\nDataset', height=4, width=8, highlightthickness=0,fg=c.darkMode[2], bg=c.darkMode[1], command=lambda: self.openDataset())
         openDatasetButton.grid(row=0, pady=(0, 55))
         
-        meltPondLabel = tk.Label(self, text='Melt\nPond', font=(None, 12))
+        meltPondLabel = tk.Label(self, text='Melt\nPond', font=(None, 12), fg=c.segmentColors[5], bg=c.darkMode[1])
         meltPondLabel.grid(row=0, pady=(105, 0))
         
-        snowLabel = tk.Label(self, text='Snow', font=(None, 12))
+        snowLabel = tk.Label(self, text='Snow', font=(None, 12), fg=c.segmentColors[4], bg=c.darkMode[1])
         snowLabel.grid(row=0, pady=(190, 0))
         
-        subIceLabel = tk.Label(self, text='Sub\nIce', font=(None, 12))
+        subIceLabel = tk.Label(self, text='Sub\nIce', font=(None, 12), fg=c.segmentColors[3], bg=c.darkMode[1])
         subIceLabel.grid(row=0, pady=(280, 0))
         
-        shadowLabel = tk.Label(self, text='Shadow', font=(None, 12))
+        shadowLabel = tk.Label(self, text='Shadow', font=(None, 12),fg=c.segmentColors[2], bg=c.darkMode[1])
         shadowLabel.grid(row=0, pady=(360, 0))
         
-        thinIceLabel = tk.Label(self, text='Thin\nIce', font=(None, 12))
+        thinIceLabel = tk.Label(self, text='Thin\nIce', font=(None, 12),fg=c.segmentColors[1], bg=c.darkMode[1])
         thinIceLabel.grid(row=0, pady=(450,0))
         
-        waterLabel = tk.Label(self, text='Water', font=(None, 12))
+        waterLabel = tk.Label(self, text='Water', font=(None, 12),fg=c.segmentColors[0], bg=c.darkMode[1])
         waterLabel.grid(row=0, pady=(525,0))
         
         self.imgIDS = []
@@ -263,7 +314,6 @@ class ButtonsLeft(tk.Frame):
             if v == self.parent.Data.currentImgId:
                 index = i-1
                 
-        self.parent.ImageDisplay.topRightDisplay.clear()
         self.parent.Data.currentImgId = self.imgIDS[index%len(self.imgIDS)]
         self.parent.ButtonsCenter.imageIdLabel.config(text='Current Image ID: '+self.parent.Data.currentImgId)
         self.parent.Data.imageMaskArray = self.parent.Data.loadRLE()
@@ -280,7 +330,6 @@ class ButtonsLeft(tk.Frame):
             if v == self.parent.Data.currentImgId:
                 index = i+1
 
-        self.parent.ImageDisplay.topRightDisplay.clear()
         self.parent.Data.currentImgId = self.imgIDS[index % len(self.imgIDS)]
         self.parent.ButtonsCenter.imageIdLabel.config(text="Current Image ID: "+self.parent.Data.currentImgId)
         self.parent.Data.imageMaskArray = self.parent.Data.loadRLE()
@@ -297,18 +346,18 @@ class ButtonsCenter(tk.Frame):
         self.parent = parent
         self.c = colors()
         
-        self.config(bg='#292B2F')
+        self.config(bg=self.c.darkMode[3])
         
-        graphLabel = tk.Label(self, text='Percentage of Current Segments')
+        graphLabel = tk.Label(self, text='Percentage of Current Segments', fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         graphLabel.grid(row=0, column=0, padx=(0, 80))
         
-        self.imageIdLabel = tk.Label(self, text='Current Image ID: '+self.parent.Data.currentImgId)
+        self.imageIdLabel = tk.Label(self, text='Current Image ID: '+str(self.parent.Data.currentImgId),fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         self.imageIdLabel.grid(row=1, column=0, pady=(20,20))
         
-        self.segCountLabel = tk.Label(self, text='Current Total Segments: '+str(self.parent.Data.currentSegCount))
+        self.segCountLabel = tk.Label(self, text='Current Total Segments: '+str(self.parent.Data.currentSegCount),fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         self.segCountLabel.grid(row=0, column=1)
         
-        delButton = tk.Button(self, text='DELETE', height=2, width=8, highlightthickness=0, command=self.delButtonFunc)
+        delButton = tk.Button(self, text='DELETE', height=2, width=8, highlightthickness=0, command=self.delButtonFunc, fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         delButton.grid(row=1, column=1, pady=(20,0), padx=(80,0))
         
     def delButtonFunc(self):
@@ -329,22 +378,87 @@ class ButtonsRight(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
         self.parent = parent
+        self.c = colors()
         
-        self.config(bg='#292B2F')
+        self.config(bg=self.c.darkMode[3])
         
-        imgDirButton = tk.Button(self, text='Open Img\nDirectory', height=4, width=8, highlightthickness=0, command=lambda: self.openImgDir())
+        imgDirButton = tk.Button(self, text='Open Img\nDirectory', height=4, width=8, highlightthickness=0, command=lambda: self.openImgDir(), fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         imgDirButton.grid(row=0, pady=(510, 0))
         
-        helpButton = tk.Button(self, text='Help!', width=8, height=4, highlightthickness=0, command=self.getHelp)
-        helpButton.grid(row=0, pady=(0, 0))
+        helpButton = tk.Button(self, text='Help!', width=8, height=4, highlightthickness=0, command=self.getHelp, fg=self.c.darkMode[2], bg=self.c.darkMode[1])
+        helpButton.grid(row=0, pady=(0, 400))
+        
+        nextButton = tk.Button(self, text='->', width=3, height=2,  highlightthickness=0, fg=self.c.darkMode[2], bg=self.c.darkMode[1], command=lambda: self.nextSegment())
+        nextButton.grid(row=0, pady=(0, 160), padx=(30, 0))
+        
+        prevButton = tk.Button(self, text='<-', width=3, height=2,  highlightthickness=0, fg=self.c.darkMode[2], bg=self.c.darkMode[1], command=lambda: self.prevSegment())
+        prevButton.grid(row=0, pady=(0, 160), padx=(0, 30))
+        
+        waterButton = tk.Button(self, text='0', highlightthickness=0, fg=self.c.segmentColors[0], bg=self.c.darkMode[1], command=lambda: self.changeCat(0))
+        waterButton.grid(row=0, pady=(90,0), padx=(0, 30))
+        
+        thinIceButton = tk.Button(self, text='1', highlightthickness=0, fg=self.c.segmentColors[1], bg=self.c.darkMode[1], command=lambda: self.changeCat(1))
+        thinIceButton.grid(row=0, pady=(90,0), padx=(0, 0))
+        
+        shadowButton = tk.Button(self, text='2', highlightthickness=0, fg=self.c.segmentColors[2], bg=self.c.darkMode[1], command=lambda: self.changeCat(2))
+        shadowButton.grid(row=0, pady=(90,0), padx=(30, 0))
+        
+        subIceButton = tk.Button(self, text='3', highlightthickness=0, fg=self.c.segmentColors[3], bg=self.c.darkMode[1], command=lambda: self.changeCat(3))
+        subIceButton.grid(row=0, pady=(40,0), padx=(0, 30))
+        
+        snowButton = tk.Button(self, text='4', highlightthickness=0, fg=self.c.segmentColors[4], bg=self.c.darkMode[1], command=lambda: self.changeCat(4))
+        snowButton.grid(row=0, pady=(40,0), padx=(0, 0))
+        
+        meltPondButton = tk.Button(self, text='5', highlightthickness=0, fg=self.c.segmentColors[5], bg=self.c.darkMode[1], command=lambda: self.changeCat(5))
+        meltPondButton.grid(row=0, pady=(40,0), padx=(30, 0))
+        
+        self.currentSegIDLabel = tk.Label(self, text='Current\nSeg ID:\n'+str(self.parent.Data.currentSegmentID),highlightthickness=0, fg=self.c.darkMode[2], bg=self.c.darkMode[1])
+        self.currentSegIDLabel.grid(row=0, pady=(0, 265))
+        
+        self.currentCatIDLabel = tk.Label(self, text='Current\nCat ID:\n'+str(self.parent.Data.currentCatID),highlightthickness=0, fg=self.c.darkMode[2], bg=self.c.darkMode[1])
+        self.currentCatIDLabel.grid(row=0, pady=(0, 50))
         
     def openImgDir(self):
-        imgDir = fd.askopenfilename(title='Enter Directory Containing Segmented Images')
+        imgDir = fd.askdirectory(title='Enter Directory Containing Segmented Images')
         self.parent.Data.imgDir = imgDir
         self.parent.ImageDisplay.updateImages()
         
     def getHelp(self):
-        webbrowser.open('https://github.com/CjMoor3/ArcCI-Collab-Repo/wiki')
+        wb.open('https://github.com/CjMoor3/ArcCI-Collab-Repo/wiki/ViewCOCO')
+        
+    def nextSegment(self):
+        index = 0
+        
+        if self.parent.Data.currentSegmentID == None:
+            self.parent.Data.currentSegmentID = self.parent.Data.currentSegments[0]
+            self.categoryID = self.parent.Data.currentCatID
+        else:
+            for i, v in enumerate(self.parent.Data.currentSegments):
+                if v == self.parent.Data.currentSegmentID:
+                    index = i+1
+                    
+            self.parent.Data.currentSegmentID = self.parent.Data.currentSegments[index]
+            
+        self.parent.ImageDisplay.updateImages()
+        
+    def prevSegment(self):
+        index = 0
+        
+        if self.parent.Data.currentSegmentID == None:
+            self.parent.Data.currentSegmentID = self.parent.Data.currentSegments[-1]
+            self.categoryID = self.parent.Data.currentCatID
+        else:
+            for i, v in enumerate(self.parent.Data.currentSegments):
+                if v == self.parent.Data.currentSegmentID:
+                    index = i-1
+                    
+            self.parent.Data.currentSegmentID = self.parent.Data.currentSegments[index]
+            
+        self.parent.ImageDisplay.updateImages()
+        
+    def changeCat(self, catID):
+        self.parent.Data.changeCategory(catID)
+        self.parent.ImageDisplay.updateImages()
           
 class ImageDisplay(tk.Frame):
     def __init__(self, parent):
@@ -367,8 +481,11 @@ class ImageDisplay(tk.Frame):
         self.updateImages()
          
     def updateImages(self):
+        self.parent.Data.imageMaskArray = self.parent.Data.loadRLE()
         self.parent.Data.loadImage()
         topLeftDisplay = self.graph.add_subplot(2,2,1)
+        topLeftDisplay.clear()
+        topLeftDisplay.set_label('DatasetDisplay')
         topLeftDisplay.imshow(self.parent.Data.imageMaskArray)
         topLeftDisplay.tick_params(axis='both',  # changes apply to the x-axis
                        which='both',             # both major and minor ticks are affected
@@ -379,9 +496,11 @@ class ImageDisplay(tk.Frame):
                        labelleft=False,
                        labelbottom=False)
         
-        self.topRightDisplay = self.graph.add_subplot(2,2,2)
-        self.topRightDisplay.pie(self.parent.Data.segVals, labels=self.parent.Data.segLabels, colors=self.parent.Data.segCols, autopct="%1.1f%%", startangle=45, radius=0.7, textprops={'color':'grey'})
-        self.topRightDisplay.tick_params(axis='both', # changes apply to the x-axis
+        topRightDisplay = self.graph.add_subplot(2,2,2)
+        topRightDisplay.clear()
+        topRightDisplay.set_label('PieChart')
+        topRightDisplay.pie(self.parent.Data.segVals, labels=self.parent.Data.segLabels, colors=self.parent.Data.segCols, autopct="%1.1f%%", startangle=45, radius=0.7, textprops={'color':'grey'})
+        topRightDisplay.tick_params(axis='both', # changes apply to the x-axis
                        which='both',                  # both major and minor ticks are affected
                        bottom=False,                  # ticks along the bottom edge are off
                        top=False,                     # ticks along the top edge are off
@@ -391,9 +510,14 @@ class ImageDisplay(tk.Frame):
                        labelbottom=False)
         
         botLeftDisplay = self.graph.add_subplot(2,2,3)
+        botLeftDisplay.clear()
+        botLeftDisplay.set_label('BarChart')
         botLeftDisplay.set_facecolor(self.c.darkMode[3])
         botLeftDisplay.set_autoscalex_on(False)
-        botLeftDisplay.barh(self.parent.Data.segLabelsConst, self.parent.Data.segPcts, color=self.c.segmentColors)
+        try:
+            botLeftDisplay.barh(self.parent.Data.segLabelsConst, self.parent.Data.segPcts, color=self.c.segmentColors)
+        except ValueError:
+            pass
         botLeftDisplay.set_xlim([0, 100])
         botLeftDisplay.tick_params(axis='both', # changes apply to the x-axis
                        which='both',            # both major and minor ticks are affected
@@ -404,6 +528,8 @@ class ImageDisplay(tk.Frame):
                        colors='white')
         
         botRightDisplay = self.graph.add_subplot(2,2,4)
+        botRightDisplay.clear()
+        botRightDisplay.set_label('ImageDisplay')
         botRightDisplay.imshow(self.parent.Data.imagePlot)
         botRightDisplay.tick_params(axis='both', # changes apply to the x-axis
                        which='both',             # both major and minor ticks are affected
@@ -413,14 +539,21 @@ class ImageDisplay(tk.Frame):
                        right=False,
                        labelleft=False,
                        labelbottom=False)
-       
+        
+        try:
+            self.parent.ButtonsRight.currentSegIDLabel.config(text='Current\nSeg ID:\n'+str(self.parent.Data.currentSegmentID))
+            self.parent.ButtonsRight.currentCatIDLabel.config(text='Current\nCat ID:\n'+str(self.parent.Data.currentCatID))
+        except AttributeError:
+            pass
+        self.graph.canvas.mpl_connect('button_press_event', self.parent.Data.onClick)
         self.canvas.draw()
+        
              
 class WindowClass(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
         self.parent = parent
-        self.parent.title('VIEWCOCO 2.0')
+        self.parent.title('ViewCOCO')
         
         self.Data = DataManager(self)
         
@@ -437,7 +570,7 @@ class WindowClass(tk.Frame):
 def main():
     root = tk.Tk()
     
-    root.geometry('765x675')
+    root.geometry('725x680')
     
     window = WindowClass(root)
     window.pack(fill='both', expand=True)

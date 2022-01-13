@@ -84,7 +84,7 @@ class createCOCO:
             counts = i[0]
             segID = i[1]
             cat = i[2]
-            segIdStatus = self.checkAnnotation(i[1], imgName, masterDict['annotation'])
+            segIdStatus = self.checkAnnotation(segID, imgId, masterDict['annotation'])
             if cat != None and segIdStatus: # and self.checkDict(segID, masterDict['annotation']):
                 masterDict['annotation'].append({
                     'id': segID,
