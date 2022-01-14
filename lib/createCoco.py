@@ -51,7 +51,7 @@ class createCOCO:
                                         },
                                         {
                                         'id': 3,
-                                        'name': 'Shadow',
+                                        'name': 'Sub Ice',
                                         'supercategory': 'geo'
                                         },
                                         {
