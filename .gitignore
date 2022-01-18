@@ -11,13 +11,10 @@ lib/build/
 lib/build/*
 lib/rescale_intensity.c
 # All of the above files are cache files generated at runtime and don't need to be tracked
-TDSCOCO/
-TDSCOCO/*
-cropImages/
-cropImages/*
-MaskedImages/
-MaskedImages/*
-pics/*
+ReadGUI/
+ReadGUI/*
+OutputGUI/
+OutputGUI/*
 # The above files are directories to be used by the GUI for input and output
 .vscode/
 debugScripts/
