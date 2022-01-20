@@ -394,23 +394,23 @@ class ButtonsRight(tk.Frame):
         prevButton = tk.Button(self, text='<-', width=3, height=2,  highlightthickness=0, fg=self.c.darkMode[2], bg=self.c.darkMode[1], command=lambda: self.prevSegment())
         prevButton.grid(row=0, pady=(0, 160), padx=(0, 30))
         
-        waterButton = tk.Button(self, text='0', highlightthickness=0, fg=self.c.segmentColors[0], bg=self.c.darkMode[1], command=lambda: self.changeCat(0))
-        waterButton.grid(row=0, pady=(90,0), padx=(0, 30))
+        waterButton = tk.Button(self, width=1, text='0', highlightthickness=0, fg=self.c.segmentColors[0], bg=self.c.darkMode[1], command=lambda: self.changeCat(0))
+        waterButton.grid(row=0, pady=(40,0), padx=(0, 30))
         
-        thinIceButton = tk.Button(self, text='1', highlightthickness=0, fg=self.c.segmentColors[1], bg=self.c.darkMode[1], command=lambda: self.changeCat(1))
-        thinIceButton.grid(row=0, pady=(90,0), padx=(0, 0))
+        thinIceButton = tk.Button(self, width=1, text='1', highlightthickness=0, fg=self.c.segmentColors[1], bg=self.c.darkMode[1], command=lambda: self.changeCat(1))
+        thinIceButton.grid(row=0, pady=(40,0), padx=(30, 0))
         
-        shadowButton = tk.Button(self, text='2', highlightthickness=0, fg=self.c.segmentColors[2], bg=self.c.darkMode[1], command=lambda: self.changeCat(2))
-        shadowButton.grid(row=0, pady=(90,0), padx=(30, 0))
+        shadowButton = tk.Button(self, width=1, text='2', highlightthickness=0, fg=self.c.segmentColors[2], bg=self.c.darkMode[1], command=lambda: self.changeCat(2))
+        shadowButton.grid(row=0, pady=(90,0), padx=(0, 30))
         
-        subIceButton = tk.Button(self, text='3', highlightthickness=0, fg=self.c.segmentColors[3], bg=self.c.darkMode[1], command=lambda: self.changeCat(3))
-        subIceButton.grid(row=0, pady=(40,0), padx=(0, 30))
+        subIceButton = tk.Button(self, width=1, text='3', highlightthickness=0, fg=self.c.segmentColors[3], bg=self.c.darkMode[1], command=lambda: self.changeCat(3))
+        subIceButton.grid(row=0, pady=(90,0), padx=(30, 0))
         
-        snowButton = tk.Button(self, text='4', highlightthickness=0, fg=self.c.segmentColors[4], bg=self.c.darkMode[1], command=lambda: self.changeCat(4))
-        snowButton.grid(row=0, pady=(40,0), padx=(0, 0))
+        snowButton = tk.Button(self, width=1, text='4', highlightthickness=0, fg=self.c.segmentColors[4], bg=self.c.darkMode[1], command=lambda: self.changeCat(4))
+        snowButton.grid(row=0, pady=(140, 0), padx=(0, 30))
         
-        meltPondButton = tk.Button(self, text='5', highlightthickness=0, fg=self.c.segmentColors[5], bg=self.c.darkMode[1], command=lambda: self.changeCat(5))
-        meltPondButton.grid(row=0, pady=(40,0), padx=(30, 0))
+        meltPondButton = tk.Button(self, width=1, text='5', highlightthickness=0, fg=self.c.segmentColors[5], bg=self.c.darkMode[1], command=lambda: self.changeCat(5))
+        meltPondButton.grid(row=0, pady=(140, 0), padx=(30, 0))
         
         self.currentSegIDLabel = tk.Label(self, text='Current\nSeg ID:\n'+str(self.parent.Data.currentSegmentID),highlightthickness=0, fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         self.currentSegIDLabel.grid(row=0, pady=(0, 265))
@@ -570,7 +570,7 @@ class WindowClass(tk.Frame):
 def main():
     root = tk.Tk()
     
-    root.geometry('725x680')
+    root.geometry('760x680')
     
     window = WindowClass(root)
     window.pack(fill='both', expand=True)
