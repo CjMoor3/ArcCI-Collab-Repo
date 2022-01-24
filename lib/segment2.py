@@ -8,7 +8,7 @@ import warnings
 import skimage
 from skimage import filters, morphology, feature, img_as_ubyte, segmentation, data, color
 from skimage.filters import rank
-from skimage.morphology import watershed, disk
+from skimage.morphology import disk
 from scipy import ndimage
 from ctypes import *
 from lib import utils
@@ -83,7 +83,6 @@ def segment_image2(input_data, smooth, gradient_cut, merging_cut, image_type=Fal
 
         band_list = [0, 0, 0]
         
-        img = input_data[:, :, 0]  # Squeeze (1,199,199)->(199,199)
 #        high_threshold = 200   ## Needs to be checked
 #        low_threshold = 20
         
@@ -92,14 +91,13 @@ def segment_image2(input_data, smooth, gradient_cut, merging_cut, image_type=Fal
 
     else:   #image_type == 'srgb'
         band_list = [0, 1, 2]
-        img = np.transpose(input_data,(1,2,0))  # The canonical way of switching dimensions
         
     
     # print(image_type) 
     # print(input_data.shape)
     # print(img.shape)
         
-    segmented_data, gradient, markers_nolabel = watershed_transformation(input_data, band_list, smooth, gradient_cut)
+    segmented_data = watershed_transformation(input_data, band_list, smooth, gradient_cut)
     #segmented_data = watershed_transformation(input_data, band_list, smooth, gradient_cut)
 
 #    img = np.stack((WV3,)*3, axis=-1) #axis=-1 new dimension will be the last dimension
@@ -132,14 +130,14 @@ def watershed_transformation(image_data, band_list, smooth, gradient_cut):
     # If this block has no data, return a placeholder watershed.
     if np.amax(image_data[0]) <= 1:
         # We just need the dimensions from one band
-        blankimg=np.zeros(np.shape(image_data[0]))
+        blankimg = np.zeros(np.shape(image_data[0]))
         return blankimg, blankimg, blankimg  # Handel blank image
 
-
-    denoised = rank.median(image_data[:, :, 0], disk(smooth))   # Modified 12/4/2020
+    genDisk = disk(smooth)
+    denoised = rank.median(image=image_data[:, :, 0], footprint=genDisk)   # Modified 12/4/2020
 
     # find continuous region (low gradient -
-    # where less than 10 for this image) --> markers
+    # where less than 10 for this image) --> markers    
     # disk(5) is used here to get a more smooth image
 #    markers = rank.gradient(denoised, disk(5)) < 12
  
@@ -150,7 +148,7 @@ def watershed_transformation(image_data, band_list, smooth, gradient_cut):
     # a=denoised      
     # print(type(a), a.dtype, a.shape)
    
-    gradient = rank.gradient(denoised, disk(smooth))
+    gradient = rank.gradient(denoised, genDisk)
     
     
     
@@ -159,7 +157,7 @@ def watershed_transformation(image_data, band_list, smooth, gradient_cut):
     
 
     markers = gradient < gradient_cut
-    markers_nolabel = markers
+    # markers_nolabel = markers
    
 #    markers = rank.gradient(denoised, disk(5)) < 15
     markers = ndi.label(markers)[0]  # Label each marker 1,2,3...
@@ -195,6 +193,6 @@ def watershed_transformation(image_data, band_list, smooth, gradient_cut):
 
 
     
-    return im_watersheds, gradient, markers_nolabel
+    return im_watersheds
 #    return im_watersheds
 
