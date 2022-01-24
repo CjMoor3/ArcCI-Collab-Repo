@@ -567,7 +567,7 @@ class WindowClass(tk.Frame):
         self.ButtonsRight = ButtonsRight(self)
         self.ButtonsRight.grid(row = 0, column = 2, rowspan = 3, sticky='NSE')
             
-def main():
+if __name__ == '__main__':
     root = tk.Tk()
     
     root.geometry('760x680')
@@ -577,5 +577,3 @@ def main():
     
     root.resizable(False, False)
     root.mainloop()
-    
-main()
