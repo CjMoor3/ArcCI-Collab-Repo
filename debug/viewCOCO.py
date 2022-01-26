@@ -81,7 +81,7 @@ class DataManager():
                 x = int(event.xdata)
                 y = int(event.ydata)
                 
-                self.parent.Data.currentSegmentID = int(self.parent.Data.idArray[x, y])
+                self.parent.Data.currentSegmentID = int(self.parent.Data.idArray[y, x])
                 
         self.parent.ImageDisplay.updateImages()
         
@@ -220,43 +220,65 @@ class DataManager():
             arraySize.append(3)
 
             array = np.zeros(arraySize)
-            categoryArray = np.zeros(arraySize[0:2])
-            idNumArray = np.zeros(arraySize[0:2])
-
+            categoryArray = np.zeros(arraySize[0:2]).flatten()
+            idNumArray = np.zeros(arraySize[0:2]).flatten()
+            
             for i, count in enumerate(subDict):
-                booleanSize = count["segmentation"]["size"][0:2]
-                
                 self.currentSegments.append(count['id'])
                 
                 categoryCountList.append(count['category_id'])
-
+                
                 countList = count["segmentation"]["counts"]
+                
                 boolean = False
                 arrayIndex = 0
                 for indivCount in countList:
-                    for b in range(indivCount):
-                        xIndex = arrayIndex % booleanSize[0]
-                        yIndex = math.floor(arrayIndex / booleanSize[0])
-                        if boolean:
-                            if count['id'] != self.currentSegmentID:
-                                categoryArray[xIndex, yIndex] = count["category_id"]
-                            elif count['id'] == self.currentSegmentID:
-                                categoryArray[xIndex, yIndex] = 6
-                                self.currentCatID = count['category_id']
-                                
-                            idNumArray[xIndex, yIndex] = count['id']
-
-                        arrayIndex += 1
-
+                    if boolean:
+                        if count["id"] != self.currentSegmentID:
+                            categoryArray[arrayIndex:arrayIndex+indivCount] = count["category_id"]
+                        elif count['id'] == self.currentSegmentID:
+                            categoryArray[arrayIndex:arrayIndex+indivCount] = 6
+                        idNumArray[arrayIndex:arrayIndex+indivCount] = count['id']
+                    arrayIndex += indivCount
                     boolean = not boolean
                     
-            self.idArray = idNumArray
+            categoryArray = np.reshape(categoryArray, (arraySize[0:2]))
+
+#             for i, count in enumerate(subDict):
+#                 booleanSize = count["segmentation"]["size"][0:2]
+                
+#                 self.currentSegments.append(count['id'])
+                
+#                 categoryCountList.append(count['category_id'])
+
+#                 countList = count["segmentation"]["counts"]
+#                 boolean = False
+#                 arrayIndex = 0
+#                 for indivCount in countList:
+#                     for b in range(indivCount):
+#                         xIndex = arrayIndex % booleanSize[0]
+#                         yIndex = math.floor(arrayIndex / booleanSize[0])
+#                         if boolean:
+#                             if count['id'] != self.currentSegmentID:
+#                                 categoryArray[xIndex, yIndex] = count["category_id"]
+#                             elif count['id'] == self.currentSegmentID:
+#                                 categoryArray[xIndex, yIndex] = 6
+#                                 self.currentCatID = count['category_id']
+                                
+#                             idNumArray[xIndex, yIndex] = count['id']
+
+#                         arrayIndex += 1
+
+#                     boolean = not boolean
+                    
+            self.idArray = np.reshape(idNumArray, arraySize[0:2])
             self.countCats(categoryCountList)
             
-            for y in range(booleanSize[0]):
-                for x in range(booleanSize[1]):
-                    colorList = self.hexToRGB(self.c.segmentColors[int(categoryArray[x, y])])
-                    array[y, x] = colorList
+            colorConverts = [self.hexToRGB(self.c.segmentColors[k]) for k in range(7)]
+            for y in range(arraySize[0]):
+                for x in range(arraySize[1]):
+                    colorList = colorConverts[int(categoryArray[x, y])]
+                    array[x, y] = colorList
 
             array = array.astype(dtype=np.uint8)
             return array
@@ -467,7 +489,6 @@ class ImageDisplay(tk.Frame):
         self.c = colors()
         
         self.graph = Figure(figsize=(6,6))
-        self.graph.tight_layout()
         self.canvas = FigureCanvasTkAgg(self.graph, self)
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(sticky='NSEW', padx=((0,0)))
@@ -478,16 +499,20 @@ class ImageDisplay(tk.Frame):
         
         self.graph.set_facecolor(self.c.darkMode[3])
         
+        self.topLeftDisplay = self.graph.add_subplot(2,2,1, label='DatasetDisplay')
+        self.topRightDisplay = self.graph.add_subplot(2,2,4, label='PieChart')
+        self.botLeftDisplay = self.graph.add_subplot(2,2,3, label="BarChart")
+        self.botRightDisplay = self.graph.add_subplot(2,2,2, label='ImageDisplay')
+        
         self.updateImages()
          
     def updateImages(self):
         self.parent.Data.imageMaskArray = self.parent.Data.loadRLE()
         self.parent.Data.loadImage()
-        topLeftDisplay = self.graph.add_subplot(2,2,1)
-        topLeftDisplay.clear()
-        topLeftDisplay.set_label('DatasetDisplay')
-        topLeftDisplay.imshow(self.parent.Data.imageMaskArray)
-        topLeftDisplay.tick_params(axis='both',  # changes apply to the x-axis
+        
+        self.topLeftDisplay.clear()
+        self.topLeftDisplay.imshow(self.parent.Data.imageMaskArray)
+        self.topLeftDisplay.tick_params(axis='both',  # changes apply to the x-axis
                        which='both',             # both major and minor ticks are affected
                        bottom=False,             # ticks along the bottom edge are off
                        top=False,                # ticks along the top edge are off
@@ -496,11 +521,10 @@ class ImageDisplay(tk.Frame):
                        labelleft=False,
                        labelbottom=False)
         
-        topRightDisplay = self.graph.add_subplot(2,2,2)
-        topRightDisplay.clear()
-        topRightDisplay.set_label('PieChart')
-        topRightDisplay.pie(self.parent.Data.segVals, labels=self.parent.Data.segLabels, colors=self.parent.Data.segCols, autopct="%1.1f%%", startangle=45, radius=0.7, textprops={'color':'grey'})
-        topRightDisplay.tick_params(axis='both', # changes apply to the x-axis
+        
+        self.topRightDisplay.clear()
+        self.topRightDisplay.pie(self.parent.Data.segVals, labels=self.parent.Data.segLabels, colors=self.parent.Data.segCols, autopct="%1.1f%%", startangle=45, radius=0.7, textprops={'color':'grey'})
+        self.topRightDisplay.tick_params(axis='both', # changes apply to the x-axis
                        which='both',                  # both major and minor ticks are affected
                        bottom=False,                  # ticks along the bottom edge are off
                        top=False,                     # ticks along the top edge are off
@@ -509,17 +533,15 @@ class ImageDisplay(tk.Frame):
                        labelleft=False,
                        labelbottom=False)
         
-        botLeftDisplay = self.graph.add_subplot(2,2,3)
-        botLeftDisplay.clear()
-        botLeftDisplay.set_label('BarChart')
-        botLeftDisplay.set_facecolor(self.c.darkMode[3])
-        botLeftDisplay.set_autoscalex_on(False)
+        self.botLeftDisplay.clear()
+        self.botLeftDisplay.set_facecolor(self.c.darkMode[3])
+        self.botLeftDisplay.set_autoscalex_on(False)
         try:
-            botLeftDisplay.barh(self.parent.Data.segLabelsConst, self.parent.Data.segPcts, color=self.c.segmentColors)
+            self.botLeftDisplay.barh(self.parent.Data.segLabelsConst, self.parent.Data.segPcts, color=self.c.segmentColors)
         except ValueError:
             pass
-        botLeftDisplay.set_xlim([0, 100])
-        botLeftDisplay.tick_params(axis='both', # changes apply to the x-axis
+        self.botLeftDisplay.set_xlim([0, 100])
+        self.botLeftDisplay.tick_params(axis='both', # changes apply to the x-axis
                        which='both',            # both major and minor ticks are affected
                        bottom=True,
                        right=False,
@@ -527,11 +549,9 @@ class ImageDisplay(tk.Frame):
                        labelbottom=True,
                        colors='white')
         
-        botRightDisplay = self.graph.add_subplot(2,2,4)
-        botRightDisplay.clear()
-        botRightDisplay.set_label('ImageDisplay')
-        botRightDisplay.imshow(self.parent.Data.imagePlot)
-        botRightDisplay.tick_params(axis='both', # changes apply to the x-axis
+        self.botRightDisplay.clear()
+        self.botRightDisplay.imshow(self.parent.Data.imagePlot)
+        self.botRightDisplay.tick_params(axis='both', # changes apply to the x-axis
                        which='both',             # both major and minor ticks are affected
                        bottom=False,             # ticks along the bottom edge are off
                        top=False,                # ticks along the top edge are off
