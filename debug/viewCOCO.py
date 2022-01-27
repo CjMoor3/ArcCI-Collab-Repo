@@ -243,33 +243,6 @@ class DataManager():
                     boolean = not boolean
                     
             categoryArray = np.reshape(categoryArray, (arraySize[0:2]))
-
-#             for i, count in enumerate(subDict):
-#                 booleanSize = count["segmentation"]["size"][0:2]
-                
-#                 self.currentSegments.append(count['id'])
-                
-#                 categoryCountList.append(count['category_id'])
-
-#                 countList = count["segmentation"]["counts"]
-#                 boolean = False
-#                 arrayIndex = 0
-#                 for indivCount in countList:
-#                     for b in range(indivCount):
-#                         xIndex = arrayIndex % booleanSize[0]
-#                         yIndex = math.floor(arrayIndex / booleanSize[0])
-#                         if boolean:
-#                             if count['id'] != self.currentSegmentID:
-#                                 categoryArray[xIndex, yIndex] = count["category_id"]
-#                             elif count['id'] == self.currentSegmentID:
-#                                 categoryArray[xIndex, yIndex] = 6
-#                                 self.currentCatID = count['category_id']
-                                
-#                             idNumArray[xIndex, yIndex] = count['id']
-
-#                         arrayIndex += 1
-
-#                     boolean = not boolean
                     
             self.idArray = np.reshape(idNumArray, arraySize[0:2])
             self.countCats(categoryCountList)
