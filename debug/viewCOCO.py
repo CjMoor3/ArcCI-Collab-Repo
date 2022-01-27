@@ -12,7 +12,7 @@ import webbrowser as wb
 class colors:
     def __init__(self):
         self.darkMode = ['#36393F', '#2F3136', 'white', '#292B2F']
-        self.segmentColors = ['#71b8eb', '#b1ddfc', '#707070', '#8d56ba', "#fff5a8", "#d97796", '#32FF00']
+        self.segmentColors = ['#71b8eb', '#b1ddfc', '#707070', '#8d56ba', "#fff5a8", "#d97796", '#000000']
 
 class DataManager():
     def __init__(self, parent):
@@ -223,7 +223,12 @@ class DataManager():
             categoryArray = np.zeros(arraySize[0:2]).flatten()
             idNumArray = np.zeros(arraySize[0:2]).flatten()
             
+            outlineSegment = None
+            
             for i, count in enumerate(subDict):
+                if count["id"] == self.currentSegmentID:
+                    outlineSegment = count
+                
                 self.currentSegments.append(count['id'])
                 
                 categoryCountList.append(count['category_id'])
@@ -234,11 +239,29 @@ class DataManager():
                 arrayIndex = 0
                 for indivCount in countList:
                     if boolean:
-                        if count["id"] != self.currentSegmentID:
-                            categoryArray[arrayIndex:arrayIndex+indivCount] = count["category_id"]
-                        elif count['id'] == self.currentSegmentID:
-                            categoryArray[arrayIndex:arrayIndex+indivCount] = 6
+                        categoryArray[arrayIndex:arrayIndex+indivCount] = count["category_id"]
                         idNumArray[arrayIndex:arrayIndex+indivCount] = count['id']
+                          
+                    arrayIndex += indivCount
+                    boolean = not boolean
+                    
+            if outlineSegment is not None:
+                
+                boolean = False
+                arrayIndex = 0
+                for indivCount in outlineSegment["segmentation"]["counts"]:
+                    if boolean:
+                        for i in range(arrayIndex, arrayIndex+indivCount):
+                            try:
+                                if idNumArray[i-arraySize[0]] != outlineSegment["id"]:
+                                    categoryArray[i] = 6
+                                if idNumArray[i+arraySize[0]] != outlineSegment["id"]:
+                                    categoryArray[i] = 6
+                            except IndexError as error:
+                                pass
+                        categoryArray[arrayIndex] = 6
+                        categoryArray[arrayIndex+indivCount] = 6
+                        
                     arrayIndex += indivCount
                     boolean = not boolean
                     
@@ -274,7 +297,7 @@ class DataManager():
             self.idArray = np.reshape(idNumArray, arraySize[0:2])
             self.countCats(categoryCountList)
             
-            colorConverts = [self.hexToRGB(self.c.segmentColors[k]) for k in range(7)]
+            colorConverts = [self.hexToRGB(color) for color in self.c.segmentColors]
             for y in range(arraySize[0]):
                 for x in range(arraySize[1]):
                     colorList = colorConverts[int(categoryArray[x, y])]
@@ -442,8 +465,9 @@ class ButtonsRight(tk.Frame):
         
     def openImgDir(self):
         imgDir = fd.askdirectory(title='Enter Directory Containing Segmented Images')
-        self.parent.Data.imgDir = imgDir
-        self.parent.ImageDisplay.updateImages()
+        if imgDir != "":
+            self.parent.Data.imgDir = imgDir
+            self.parent.ImageDisplay.updateImages()
         
     def getHelp(self):
         wb.open('https://github.com/CjMoor3/ArcCI-Collab-Repo/wiki/ViewCOCO')
