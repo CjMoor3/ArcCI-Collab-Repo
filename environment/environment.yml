@@ -9,6 +9,7 @@ dependencies:
   - matplotlib
   - jupyter
   - rasterio==1.0.21
-  - scikit-image==0.19.1
   - h5py
   - cython
+  - pip:
+    - scikit-image==0.19.1

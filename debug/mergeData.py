@@ -10,7 +10,7 @@ def fromJSON(fileName) -> dict:
     
 def toJSON(fileName, masterDict):
     with open(fileName, 'w') as file:
-        json.dump(masterDict, file, indent=3)
+        json.dump(masterDict, file, indent=4)
         file.close()
         
 def mergeData(dictList):
@@ -81,6 +81,8 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument('-d', '--dir', type=str, nargs='+')
     args = p.parse_args()
+    masterDict = []
     for dir in args.dir:
-        masterDict = [fromJSON(str(dir)+str(file)) for file in os.listdir(dir)]
+        for file in os.listdir(dir):
+            masterDict.append(fromJSON(str(dir)+str(file)))
     mergeData(masterDict)
