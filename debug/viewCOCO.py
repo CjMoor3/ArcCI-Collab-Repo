@@ -1,3 +1,4 @@
+from distutils import command
 import tkinter as tk
 from tkinter import filedialog as fd
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -6,6 +7,7 @@ import matplotlib.image as mtpltimg
 import os
 import math
 import json
+from matplotlib.pyplot import text
 import numpy as np
 import webbrowser as wb
 
@@ -30,6 +32,8 @@ class DataManager():
         self.segLabels = []     
         self.segCols   = []
         self.segPcts   = []
+        self.statBool = False
+        self.statString = ""
 
         self.currentSegmentID = None
         self.currentSegments = []
@@ -210,12 +214,20 @@ class DataManager():
             self.currentSegments = []
             categoryCountList = []
                     
-            self.currentSegCount = len(subDict)
 
             self.getImgList()
 
             arraySize = subDict[0]["segmentation"]["size"]
             arraySize.append(3)
+            
+            if self.statBool == True:
+                categoryCountList = [i['category_id'] for i in masterDict['annotation']]
+                self.currentSegCount = len(masterDict['annotation'])
+                self.statString = "Dataset"
+            elif self.statBool == False:
+                categoryCountList = [i['category_id'] for i in subDict]
+                self.currentSegCount = len(subDict)
+                self.statString = "Image"
 
             array = np.full(arraySize, 6)
             categoryArray = np.full(arraySize[0:2], 6).flatten()
@@ -228,8 +240,6 @@ class DataManager():
                     outlineSegment = count
                 
                 self.currentSegments.append(count['id'])
-                
-                categoryCountList.append(count['category_id'])
                 
                 countList = count["segmentation"]["counts"]
                 
@@ -379,6 +389,9 @@ class ButtonsCenter(tk.Frame):
         delButton = tk.Button(self, text='DELETE', height=2, width=8, highlightthickness=0, command=self.delButtonFunc, fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         delButton.grid(row=1, column=1, pady=(20,0), padx=(80,0))
         
+        self.statsLabel = tk.Label(self, text='Current Statistics:\n'+str(self.parent.Data.statString),fg=self.c.darkMode[2], bg=self.c.darkMode[1])
+        self.statsLabel.grid(row=0, column=2, rowspan=2, padx=(25, 0))
+        
     def delButtonFunc(self):
         confirmWindow = tk.Toplevel()
         confirmWindow.config(bg=self.c.darkMode[3])
@@ -431,6 +444,9 @@ class ButtonsRight(tk.Frame):
         meltPondButton = tk.Button(self, width=2, text='5', highlightthickness=0, fg=self.c.segmentColors[5], bg=self.c.darkMode[1], command=lambda: self.changeCat(5))
         meltPondButton.grid(row=0, pady=(140, 0), padx=(30, 0))
         
+        switchStatsButton = tk.Button(self, width=6, text='Switch\nStats', highlightthickness=0, fg=self.c.darkMode[2], bg= self.c.darkMode[1], command=lambda: self.switchStats())
+        switchStatsButton.grid(row=0, pady=(300, 0), padx=(15, 15))
+        
         self.currentSegIDLabel = tk.Label(self, text='Current\nSeg ID:\n'+str(self.parent.Data.currentSegmentID),highlightthickness=0, fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         self.currentSegIDLabel.grid(row=0, pady=(0, 265))
         
@@ -479,6 +495,11 @@ class ButtonsRight(tk.Frame):
     def changeCat(self, catID):
         self.parent.Data.changeCategory(catID)
         self.parent.ImageDisplay.updateImages()
+        
+    def switchStats(self):
+        self.parent.Data.statBool = not self.parent.Data.statBool
+        self.parent.ImageDisplay.updateImages()
+        
           
 class ImageDisplay(tk.Frame):
     def __init__(self, parent):
@@ -561,6 +582,8 @@ class ImageDisplay(tk.Frame):
         try:
             self.parent.ButtonsRight.currentSegIDLabel.config(text='Current\nSeg ID:\n'+str(self.parent.Data.currentSegmentID))
             self.parent.ButtonsRight.currentCatIDLabel.config(text='Current\nCat ID:\n'+str(self.parent.Data.currentCatID))
+            self.parent.ButtonsCenter.statsLabel.config(text='Current Statistics\n'+str(self.parent.Data.statString))
+            self.parent.ButtonsCenter.segCountLabel.config(text='Current Total Segments: '+str(self.parent.Data.currentSegCount))
         except AttributeError:
             pass
         self.graph.canvas.mpl_connect('button_press_event', self.parent.Data.onClick)
@@ -588,7 +611,7 @@ class WindowClass(tk.Frame):
 if __name__ == '__main__':
     root = tk.Tk()
     
-    root.geometry('725x680')
+    root.geometry('735x680')
     
     window = WindowClass(root)
     window.pack(fill='both', expand=True)

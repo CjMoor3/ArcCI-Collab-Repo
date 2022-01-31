@@ -27,7 +27,7 @@ class createCOCO:
             outFile.close()
 
     def toCOCO(self, fileName,
-               imgName=None, imgId=None, area=None, segList=None,        
+               imgName=None, imgId=None, segList=None,        
                trainingData=None, imgHeight=None, imgWidth=None):
         if os.path.exists(fileName) == False:
             masterDict = {'images': [],
@@ -84,6 +84,7 @@ class createCOCO:
             counts = i[0]
             segID = i[1]
             cat = i[2]
+            area = i[3]
             segIdStatus = self.checkAnnotation(segID, imgId, masterDict['annotation'])
             if cat != None and segIdStatus: # and self.checkDict(segID, masterDict['annotation']):
                 masterDict['annotation'].append({
