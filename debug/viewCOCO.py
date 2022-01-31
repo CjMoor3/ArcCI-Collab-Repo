@@ -583,6 +583,7 @@ class ImageDisplay(tk.Frame):
             self.parent.ButtonsRight.currentSegIDLabel.config(text='Current\nSeg ID:\n'+str(self.parent.Data.currentSegmentID))
             self.parent.ButtonsRight.currentCatIDLabel.config(text='Current\nCat ID:\n'+str(self.parent.Data.currentCatID))
             self.parent.ButtonsCenter.statsLabel.config(text='Current Statistics\n'+str(self.parent.Data.statString))
+            self.parent.ButtonsCenter.segCountLabel.config(text='Current Total Segments: '+str(self.parent.Data.currentSegCount))
         except AttributeError:
             pass
         self.graph.canvas.mpl_connect('button_press_event', self.parent.Data.onClick)
