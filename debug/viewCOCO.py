@@ -217,9 +217,9 @@ class DataManager():
             arraySize = subDict[0]["segmentation"]["size"]
             arraySize.append(3)
 
-            array = np.zeros(arraySize)
-            categoryArray = np.zeros(arraySize[0:2]).flatten()
-            idNumArray = np.zeros(arraySize[0:2]).flatten()
+            array = np.full(arraySize, 6)
+            categoryArray = np.full(arraySize[0:2], 6).flatten()
+            idNumArray = np.full(arraySize[0:2], 6).flatten()
             
             outlineSegment = None
             
