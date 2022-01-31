@@ -134,7 +134,7 @@ def watershed_transformation(image_data, band_list, smooth, gradient_cut):
         return blankimg, blankimg, blankimg  # Handel blank image
 
     genDisk = disk(smooth)
-    denoised = rank.median(image=image_data[:, :, 0], footprint=genDisk)   # Modified 12/4/2020
+    denoised = rank.median(image_data[:, :, 0], genDisk)   # Modified 12/4/2020
 
     # find continuous region (low gradient -
     # where less than 10 for this image) --> markers    

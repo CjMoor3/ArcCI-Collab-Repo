@@ -14,7 +14,7 @@ import webbrowser as wb
 class colors:
     def __init__(self):
         self.darkMode = ['#36393F', '#2F3136', 'white', '#292B2F']
-        self.segmentColors = ['#71b8eb', '#b1ddfc', '#707070', '#8d56ba', "#fff5a8", "#d97796", '#000000']
+        self.segmentColors = ['#71b8eb', '#b1ddfc', '#707070', '#8d56ba', "#fff5a8", "#d97796", '#000000', "32FF00"]
 
 class DataManager():
     def __init__(self, parent):
@@ -262,13 +262,13 @@ class DataManager():
                         for i in range(arrayIndex, arrayIndex+indivCount):
                             try:
                                 if idNumArray[i-arraySize[0]] != outlineSegment["id"]:
-                                    categoryArray[i] = 6
+                                    categoryArray[i] = 7
                                 if idNumArray[i+arraySize[0]] != outlineSegment["id"]:
-                                    categoryArray[i] = 6
+                                    categoryArray[i] = 7
                             except IndexError as error:
                                 pass
-                        categoryArray[arrayIndex] = 6
-                        categoryArray[arrayIndex+indivCount] = 6
+                        categoryArray[arrayIndex] = 7
+                        categoryArray[arrayIndex+indivCount] = 7
                         
                     arrayIndex += indivCount
                     boolean = not boolean
