@@ -290,6 +290,7 @@ class DataManager():
             return array
         except TypeError:
             return np.dstack(self.hexToRGB(self.c.darkMode[3]))
+        
     
 class ButtonsLeft(tk.Frame):
     def __init__(self, parent):
@@ -374,14 +375,16 @@ class ButtonsCenter(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.c = colors()
+        self.imgIDS = []
+        self.getImgIDS()
         
         self.config(bg=self.c.darkMode[3])
         
         graphLabel = tk.Label(self, text='Percentage of Current Segments', fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         graphLabel.grid(row=0, column=0, padx=(0, 80))
         
-        self.imageIdLabel = tk.Label(self, text='Current Image ID: '+str(self.parent.Data.currentImgId),fg=self.c.darkMode[2], bg=self.c.darkMode[1])
-        self.imageIdLabel.grid(row=1, column=0, pady=(20,20))
+        self.imageIdLabel = tk.Label(self, text='Current Image ID',fg=self.c.darkMode[2], bg=self.c.darkMode[1])
+        self.imageIdLabel.grid(row=1, column=0, pady=(5,35))
         
         self.segCountLabel = tk.Label(self, text='Current Total Segments: '+str(self.parent.Data.currentSegCount),fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         self.segCountLabel.grid(row=0, column=1)
@@ -391,6 +394,23 @@ class ButtonsCenter(tk.Frame):
         
         self.statsLabel = tk.Label(self, text='Current Statistics:\n'+str(self.parent.Data.statString),fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         self.statsLabel.grid(row=0, column=2, rowspan=2, padx=(25, 0))
+        
+        self.imgVar = tk.StringVar(self)
+        self.imgVar.set(self.imgIDS[0])
+        
+        imgIdDropdown = tk.OptionMenu(self, self.imgVar, *self.imgIDS, command=self.selectImg)
+        imgIdDropdown.config(fg=self.c.darkMode[2], bg=self.c.darkMode[1])
+        imgIdDropdown.grid(row=1, column=0, pady=(20,0))
+        
+    def getImgIDS(self):
+        self.imgIDS.clear()
+        self.imgIDS = [k for k in self.parent.Data.imageDictionary]
+        
+    def selectImg(self, choice):
+        choice = self.imgVar.get()
+        self.parent.Data.currentImgId = choice
+        self.parent.Data.imageMaskArray = self.parent.Data.loadRLE()
+        self.parent.ImageDisplay.updateImages()
         
     def delButtonFunc(self):
         confirmWindow = tk.Toplevel()
