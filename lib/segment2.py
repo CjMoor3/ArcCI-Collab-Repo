@@ -127,11 +127,12 @@ def watershed_transformation(image_data, band_list, smooth, gradient_cut):
         4. Construct watersheds on top of the gradient image starting at the
             markers.
     '''
+
     # If this block has no data, return a placeholder watershed.
     if np.amax(image_data[0]) <= 1:
         # We just need the dimensions from one band
-        blankimg = np.zeros(np.shape(image_data[0]))
-        return blankimg, blankimg, blankimg  # Handel blank image
+        blankimg = np.zeros(np.shape(image_data)[0:2])
+        return blankimg  # Handel blank image
 
     genDisk = disk(smooth)
     denoised = rank.median(image_data[:, :, 0], genDisk)   # Modified 12/4/2020

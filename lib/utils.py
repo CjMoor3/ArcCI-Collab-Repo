@@ -45,7 +45,7 @@ class Task:
     def is_complete(self):
         return self.complete
 
-
+"""
 def create_task_list(src_dir, dst_dir):
 
     task_list = []
@@ -162,11 +162,11 @@ def load_tds(file_name, list_name, image_type):
 
 
 def find_blocksize(x_dim, y_dim, desired_size):
-    """
+    '''
     Finds the appropriate block size for an input image of a given dimensions.
     Method returns the first factor of the input dimension that is greater than
         the desired size.
-    """
+    '''
     if x_dim <= desired_size or y_dim <= desired_size:
         return x_dim, y_dim
 
@@ -272,6 +272,7 @@ def write_to_database(db_name, path, image_id, part, pixel_counts):
     conn.commit()
     # Close the database
     conn.close()
+
 
 #### Recombine classified image splits
 def stitch(image_files, save_path=None):
@@ -415,6 +416,7 @@ def count_features(classified_image):
     # num_pixels =  sum_snow + sum_gray_ice + sum_melt_ponds + sum_open_water
 
     return sum_snow, sum_gray_ice, sum_melt_ponds, sum_open_water, sum_shadow
+"""
 
 
 def get_image_paths(folder,keyword='.h5',strict=True):
@@ -460,6 +462,7 @@ def create_composite(band_list, dtype=np.uint8):
     
     return img
 
+"""
 # Plots a confusion matrix. Adapted from 
 # http://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
 # 
@@ -467,10 +470,10 @@ def plot_confusion_matrix(cm,categories,ylabel,xlabel,
                             normalize=False,
                             title='',
                             cmap=plt.cm.Blues):
-    """
+    '''                       
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
-    """
+    '''
     font = {'family' : 'Times New Roman',
             'weight' : 'bold',
             'size'   : 12}
@@ -501,3 +504,5 @@ def plot_confusion_matrix(cm,categories,ylabel,xlabel,
     plt.ylabel(ylabel)
     plt.xlabel(xlabel)
     plt.show()
+
+"""
