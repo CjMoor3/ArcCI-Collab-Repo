@@ -51,12 +51,12 @@ class createCOCO:
                                         },
                                         {
                                         'id': 3,
-                                        'name': 'Snow',
+                                        'name': 'Ice/Snow',
                                         'supercategory': 'geo'
                                         },
                                         {
                                         'id': 4,
-                                        'name': 'Ice/Snow',
+                                        'name': 'Sub Ice',
                                         'supercategory': 'geo'
                                         },
                                         {

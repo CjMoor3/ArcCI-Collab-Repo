@@ -1,4 +1,3 @@
-from distutils import command
 import tkinter as tk
 from tkinter import filedialog as fd
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -7,14 +6,13 @@ import matplotlib.image as mtpltimg
 import os
 import math
 import json
-from matplotlib.pyplot import text
 import numpy as np
 import webbrowser as wb
 
 class colors:
     def __init__(self):
         self.darkMode = ['#36393F', '#2F3136', 'white', '#292B2F']
-        self.segmentColors = ['#71b8eb', '#b1ddfc', '#707070', '#8d56ba', "#fff5a8", "#d97796", '#000000', "32FF00"]
+        self.segmentColors = ['#71b8eb', '#b1ddfc', '#707070', "#fff5a8", '#8d56ba', "#d97796", '#000000', "32FF00"]
 
 class DataManager():
     def __init__(self, parent):
@@ -109,11 +107,11 @@ class DataManager():
                 shadowCount += 1
                 shadowBool = True
             if i == 3:
-                subCount += 1
-                subBool = True
-            if i == 4:
                 snowCount += 1
                 snowBool = True
+            if i == 4:
+                subCount += 1
+                subBool = True
             if i == 5:
                 meltCount += 1
                 meltBool = True
@@ -135,12 +133,12 @@ class DataManager():
                     segVals.append(shadowCount)
                     segCols.append(self.c.segmentColors[2])
                 if i == 3:
-                    segLabels.append('Sub Ice')
-                    segVals.append(subCount)
-                    segCols.append(self.c.segmentColors[3])
-                if i == 4:
                     segLabels.append('Snow')
                     segVals.append(snowCount)
+                    segCols.append(self.c.segmentColors[3])
+                if i == 4:
+                    segLabels.append('Sub Ice')
+                    segVals.append(subCount)
                     segCols.append(self.c.segmentColors[4])
                 if i == 5:
                     segLabels.append('Melt Pond') 
@@ -315,11 +313,11 @@ class ButtonsLeft(tk.Frame):
         meltPondLabel = tk.Label(self, text='Melt\nPond', font=(None, 12), fg=c.segmentColors[5], bg=c.darkMode[1])
         meltPondLabel.grid(row=0, pady=(105, 0))
         
-        snowLabel = tk.Label(self, text='Snow', font=(None, 12), fg=c.segmentColors[4], bg=c.darkMode[1])
-        snowLabel.grid(row=0, pady=(190, 0))
-        
-        subIceLabel = tk.Label(self, text='Sub\nIce', font=(None, 12), fg=c.segmentColors[3], bg=c.darkMode[1])
+        subIceLabel = tk.Label(self, text='Sub\nIce', font=(None, 12), fg=c.segmentColors[4], bg=c.darkMode[1])
         subIceLabel.grid(row=0, pady=(280, 0))
+        
+        snowLabel = tk.Label(self, text='Snow', font=(None, 12), fg=c.segmentColors[3], bg=c.darkMode[1])
+        snowLabel.grid(row=0, pady=(190, 0))
         
         shadowLabel = tk.Label(self, text='Shadow', font=(None, 12),fg=c.segmentColors[2], bg=c.darkMode[1])
         shadowLabel.grid(row=0, pady=(360, 0))
@@ -455,11 +453,11 @@ class ButtonsRight(tk.Frame):
         shadowButton = tk.Button(self, width=2, text='2', highlightthickness=0, fg=self.c.segmentColors[2], bg=self.c.darkMode[1], command=lambda: self.changeCat(2))
         shadowButton.grid(row=0, pady=(90,0), padx=(0, 30))
         
-        subIceButton = tk.Button(self, width=2, text='3', highlightthickness=0, fg=self.c.segmentColors[3], bg=self.c.darkMode[1], command=lambda: self.changeCat(3))
-        subIceButton.grid(row=0, pady=(90,0), padx=(30, 0))
+        snowButton = tk.Button(self, width=2, text='3', highlightthickness=0, fg=self.c.segmentColors[3], bg=self.c.darkMode[1], command=lambda: self.changeCat(4))
+        snowButton.grid(row=0, pady=(140, 0), padx=(30, 0))
         
-        snowButton = tk.Button(self, width=2, text='4', highlightthickness=0, fg=self.c.segmentColors[4], bg=self.c.darkMode[1], command=lambda: self.changeCat(4))
-        snowButton.grid(row=0, pady=(140, 0), padx=(0, 30))
+        subIceButton = tk.Button(self, width=2, text='4', highlightthickness=0, fg=self.c.segmentColors[4], bg=self.c.darkMode[1], command=lambda: self.changeCat(3))
+        subIceButton.grid(row=0, pady=(90,0), padx=(0, 30))
         
         meltPondButton = tk.Button(self, width=2, text='5', highlightthickness=0, fg=self.c.segmentColors[5], bg=self.c.darkMode[1], command=lambda: self.changeCat(5))
         meltPondButton.grid(row=0, pady=(140, 0), padx=(30, 0))
