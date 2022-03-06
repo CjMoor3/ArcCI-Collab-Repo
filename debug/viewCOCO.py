@@ -89,69 +89,23 @@ class DataManager():
         
     def countCats(self, listParam):
         # Count Vars
-        waterCount = thinCount = shadowCount = subCount = snowCount = meltCount = 0
-        waterBool = thinBool = shadowBool = subBool = snowBool = meltBool = False
         segBools = []
         segLabels = []
         segVals = []
         segCols = []
-                    
-        for i in listParam:
-            if i == 0:
-                waterCount += 1
-                waterBool = True
-            if i == 1:
-                thinCount += 1
-                thinBool = True
-            if i == 2:
-                shadowCount += 1
-                shadowBool = True
-            if i == 3:
-                snowCount += 1
-                snowBool = True
-            if i == 4:
-                subCount += 1
-                subBool = True
-            if i == 5:
-                meltCount += 1
-                meltBool = True
+
+        counts = list(listParam.count(i) for i in range(6))
+        bools = list(counts[i] > 0 for i in range(6))
+
+        nameList = ["Water", "Thin Ice", "Shadow", "Snow", "Sub Ice", "Melt Pond"]
         
-        segBools = [waterBool, thinBool, shadowBool, subBool, snowBool, meltBool]
-        
-        for i, v in enumerate(segBools):
-            if v == True:
-                if i == 0:
-                    segLabels.append('Water')
-                    segVals.append(waterCount)
-                    segCols.append(self.c.segmentColors[0])
-                if i ==  1:
-                    segLabels.append('Thin Ice')
-                    segVals.append(thinCount)
-                    segCols.append(self.c.segmentColors[1])
-                if i == 2:
-                    segLabels.append('Shadow')
-                    segVals.append(shadowCount)
-                    segCols.append(self.c.segmentColors[2])
-                if i == 3:
-                    segLabels.append('Snow')
-                    segVals.append(snowCount)
-                    segCols.append(self.c.segmentColors[3])
-                if i == 4:
-                    segLabels.append('Sub Ice')
-                    segVals.append(subCount)
-                    segCols.append(self.c.segmentColors[4])
-                if i == 5:
-                    segLabels.append('Melt Pond') 
-                    segVals.append(meltCount)
-                    segCols.append(self.c.segmentColors[5])
+        for i, v in enumerate(bools):
+            if v:
+                segVals.append(counts[i])
+                segCols.append(self.c.segmentColors[i])
+                segLabels.append(nameList[i])
                     
-        waterPct  = (waterCount /self.currentSegCount) * 100
-        thinPct   = (thinCount  /self.currentSegCount) * 100
-        shadowPct = (shadowCount/self.currentSegCount) * 100
-        subPct    = (subCount   /self.currentSegCount) * 100
-        snowPct   = (snowCount  /self.currentSegCount) * 100
-        meltPct   = (meltCount  /self.currentSegCount) * 100
-        segPcts = [waterPct, thinPct, shadowPct, subPct, snowPct, meltPct]
+        segPcts = list((counts[i] / self.currentSegCount) * 100 for i in range(6))
         
         self.segLabels = segLabels
         self.segVals   = segVals
@@ -196,8 +150,12 @@ class DataManager():
             imagePlot = np.dstack(self.hexToRGB(self.c.darkMode[3]))
             self.imagePlot = imagePlot
         else:
-            imgName = os.path.join(self.imgDir,os.path.relpath('./img-' + self.currentImgId + '.jpg'))
-            imagePlot = mtpltimg.imread(imgName)
+            try:
+                imgName = os.path.join(self.imgDir,os.path.relpath('img-' + self.currentImgId + '.jpg'))
+                imagePlot = mtpltimg.imread(imgName)
+            except FileNotFoundError as error:
+                imgName = os.path.join(self.imgDir,os.path.relpath('img-' + self.currentImgId + '.tif'))
+                imagePlot = mtpltimg.imread(imgName)
             self.imagePlot = imagePlot
                     
     def loadRLE(self):
@@ -252,7 +210,6 @@ class DataManager():
                     boolean = not boolean
                     
             if outlineSegment is not None:
-                
                 boolean = False
                 arrayIndex = 0
                 for indivCount in outlineSegment["segmentation"]["counts"]:
@@ -414,11 +371,12 @@ class ButtonsCenter(tk.Frame):
         confirmWindow = tk.Toplevel()
         confirmWindow.config(bg=self.c.darkMode[3])
         confirmWindow.resizable(False,False)
+
         
         confirmLabel = tk.Label(confirmWindow, text="Are you sure you want to delete the current image data?", highlightthickness=0, fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         confirmLabel.grid(column=0, row=0, columnspan=2, pady=(10,10), padx=(10,10))
 
-        confirmButton = tk.Button(confirmWindow, text="Yes", highlightthickness=0, fg=self.c.darkMode[2], bg=self.c.darkMode[1], command=lambda:[self.parent.Data.deleteImgData(), confirmWindow.destroy(), self.cycleNext()])
+        confirmButton = tk.Button(confirmWindow, text="Yes", highlightthickness=0, fg=self.c.darkMode[2], bg=self.c.darkMode[1], command=lambda:[self.parent.Data.deleteImgData(), confirmWindow.destroy(), self.parent.ButtonsLeft.cycleDataNext()])
         confirmButton.grid(column=0, row=1,pady=(10,20), padx=(50,0), sticky='nsw')
 
         returnButton = tk.Button(confirmWindow, text="No", highlightthickness=0, fg=self.c.darkMode[2], bg=self.c.darkMode[1] ,command=confirmWindow.destroy)
@@ -454,10 +412,10 @@ class ButtonsRight(tk.Frame):
         shadowButton.grid(row=0, pady=(90,0), padx=(0, 30))
         
         snowButton = tk.Button(self, width=2, text='3', highlightthickness=0, fg=self.c.segmentColors[3], bg=self.c.darkMode[1], command=lambda: self.changeCat(4))
-        snowButton.grid(row=0, pady=(140, 0), padx=(30, 0))
+        snowButton.grid(row=0, pady=(90, 0), padx=(30, 0))
         
         subIceButton = tk.Button(self, width=2, text='4', highlightthickness=0, fg=self.c.segmentColors[4], bg=self.c.darkMode[1], command=lambda: self.changeCat(3))
-        subIceButton.grid(row=0, pady=(90,0), padx=(0, 30))
+        subIceButton.grid(row=0, pady=(140,0), padx=(0, 30))
         
         meltPondButton = tk.Button(self, width=2, text='5', highlightthickness=0, fg=self.c.segmentColors[5], bg=self.c.darkMode[1], command=lambda: self.changeCat(5))
         meltPondButton.grid(row=0, pady=(140, 0), padx=(30, 0))
@@ -574,7 +532,7 @@ class ImageDisplay(tk.Frame):
         self.botLeftDisplay.set_facecolor(self.c.darkMode[3])
         self.botLeftDisplay.set_autoscalex_on(False)
         try:
-            self.botLeftDisplay.barh(self.parent.Data.segLabelsConst, self.parent.Data.segPcts, color=self.c.segmentColors)
+            self.botLeftDisplay.barh(self.parent.Data.segLabelsConst, self.parent.Data.segPcts)
         except ValueError:
             pass
         self.botLeftDisplay.set_xlim([0, 100])
