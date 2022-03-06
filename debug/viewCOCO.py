@@ -29,7 +29,7 @@ class DataManager():
         self.segLabelsConst = ['Water', 'Thin Ice', 'Shadow', 'Sub Ice', 'Snow', 'Melt Pond']
         self.segLabels = []     
         self.segCols   = []
-        self.segPcts   = []
+        self.segCounts   = []
         self.statBool = False
         self.statString = ""
 
@@ -105,12 +105,12 @@ class DataManager():
                 segCols.append(self.c.segmentColors[i])
                 segLabels.append(nameList[i])
                     
-        segPcts = list((counts[i] / self.currentSegCount) * 100 for i in range(6))
+        segCounts = list((counts[i] / self.currentSegCount) * 100 for i in range(6))
         
         self.segLabels = segLabels
         self.segVals   = segVals
         self.segCols   = segCols
-        self.segPcts   = segPcts
+        self.segCounts   = counts
 
     def deleteImgData(self):
         masterDict = self.fromJSON(self.fileName)
@@ -271,10 +271,10 @@ class ButtonsLeft(tk.Frame):
         meltPondLabel.grid(row=0, pady=(105, 0))
         
         subIceLabel = tk.Label(self, text='Sub\nIce', font=(None, 12), fg=c.segmentColors[4], bg=c.darkMode[1])
-        subIceLabel.grid(row=0, pady=(280, 0))
+        subIceLabel.grid(row=0, pady=(190, 0))
         
         snowLabel = tk.Label(self, text='Snow', font=(None, 12), fg=c.segmentColors[3], bg=c.darkMode[1])
-        snowLabel.grid(row=0, pady=(190, 0))
+        snowLabel.grid(row=0, pady=(280, 0))
         
         shadowLabel = tk.Label(self, text='Shadow', font=(None, 12),fg=c.segmentColors[2], bg=c.darkMode[1])
         shadowLabel.grid(row=0, pady=(360, 0))
@@ -335,7 +335,7 @@ class ButtonsCenter(tk.Frame):
         
         self.config(bg=self.c.darkMode[3])
         
-        graphLabel = tk.Label(self, text='Percentage of Current Segments', fg=self.c.darkMode[2], bg=self.c.darkMode[1])
+        graphLabel = tk.Label(self, text='Tally of Current Segments', fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         graphLabel.grid(row=0, column=0, padx=(0, 80))
         
         self.imageIdLabel = tk.Label(self, text='Current Image ID',fg=self.c.darkMode[2], bg=self.c.darkMode[1])
@@ -411,10 +411,10 @@ class ButtonsRight(tk.Frame):
         shadowButton = tk.Button(self, width=2, text='2', highlightthickness=0, fg=self.c.segmentColors[2], bg=self.c.darkMode[1], command=lambda: self.changeCat(2))
         shadowButton.grid(row=0, pady=(90,0), padx=(0, 30))
         
-        snowButton = tk.Button(self, width=2, text='3', highlightthickness=0, fg=self.c.segmentColors[3], bg=self.c.darkMode[1], command=lambda: self.changeCat(4))
-        snowButton.grid(row=0, pady=(90, 0), padx=(30, 0))
+        snowButton = tk.Button(self, width=2, text='3', highlightthickness=0, fg=self.c.segmentColors[3], bg=self.c.darkMode[1], command=lambda: self.changeCat(3))
+        snowButton.grid(row=0, pady=(90, 0), padx=(30, 0)) 
         
-        subIceButton = tk.Button(self, width=2, text='4', highlightthickness=0, fg=self.c.segmentColors[4], bg=self.c.darkMode[1], command=lambda: self.changeCat(3))
+        subIceButton = tk.Button(self, width=2, text='4', highlightthickness=0, fg=self.c.segmentColors[4], bg=self.c.darkMode[1], command=lambda: self.changeCat(4))
         subIceButton.grid(row=0, pady=(140,0), padx=(0, 30))
         
         meltPondButton = tk.Button(self, width=2, text='5', highlightthickness=0, fg=self.c.segmentColors[5], bg=self.c.darkMode[1], command=lambda: self.changeCat(5))
@@ -530,12 +530,11 @@ class ImageDisplay(tk.Frame):
         
         self.botLeftDisplay.clear()
         self.botLeftDisplay.set_facecolor(self.c.darkMode[3])
-        self.botLeftDisplay.set_autoscalex_on(False)
         try:
-            self.botLeftDisplay.barh(self.parent.Data.segLabelsConst, self.parent.Data.segPcts)
+            self.botLeftDisplay.barh(self.parent.Data.segLabelsConst, self.parent.Data.segCounts)
         except ValueError:
             pass
-        self.botLeftDisplay.set_xlim([0, 100])
+        self.botLeftDisplay.set_xlim([0, sum(self.parent.Data.segCounts)])
         self.botLeftDisplay.tick_params(axis='both', # changes apply to the x-axis
                        which='both',            # both major and minor ticks are affected
                        bottom=True,
