@@ -223,7 +223,8 @@ class DataManager():
                             except IndexError as error:
                                 pass
                         categoryArray[arrayIndex] = 7
-                        categoryArray[arrayIndex+indivCount] = 7
+                        if arrayIndex + indivCount < 65536:
+                            categoryArray[arrayIndex + indivCount] = 7
                         
                     arrayIndex += indivCount
                     boolean = not boolean

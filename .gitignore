@@ -19,3 +19,6 @@ WriteGUI/*
 .vscode/
 debugScripts/
 # The above files are local files
+venv/
+venv/*
+#environment files

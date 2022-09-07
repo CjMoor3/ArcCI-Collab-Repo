@@ -11,6 +11,9 @@ import subprocess
 import numpy as np
 import matplotlib.image as mimg
 from skimage.measure import block_reduce
+
+import pyximport
+pyximport.install(reload_support=True)
 from lib import utils, rescale_intensity
 
 

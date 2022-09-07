@@ -82,7 +82,7 @@ class createCOCO:
             })
         for i in trainingData:
             counts = i[0]
-            segID = i[1]
+            segID = int(i[1])
             cat = i[2]
             area = i[3]
             segIdStatus = self.checkAnnotation(segID, imgId, masterDict['annotation'])
