@@ -9,12 +9,14 @@ import json
 import numpy as np
 import webbrowser as wb
 
+
 class colors:
     def __init__(self):
         self.darkMode = ['#36393F', '#2F3136', 'white', '#292B2F']
         self.segmentColors = ['#71b8eb', '#b1ddfc', '#707070', "#fff5a8", '#8d56ba', "#d97796", '#000000', "32FF00"]
 
-class DataManager():
+
+class DataManager:
     def __init__(self, parent):
         filetypes = [('json files', '*.json')]
         self.fileName = fd.askopenfilename(title="Open TDS data file", filetypes=filetypes)
@@ -32,6 +34,7 @@ class DataManager():
         self.segCounts   = []
         self.statBool = False
         self.statString = ""
+        self.area = []
 
         self.currentSegmentID = None
         self.currentSegments = []
@@ -50,9 +53,11 @@ class DataManager():
                 pass
 
         self.imageMaskArray = self.loadRLE()
-    
+
+
     def hexToRGB(self, hexCode):
         return tuple(int(hexCode.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
+
 
     def fromJSON(self, fileName):
         try:    
@@ -89,7 +94,6 @@ class DataManager():
         
     def countCats(self, listParam):
         # Count Vars
-        segBools = []
         segLabels = []
         segVals = []
         segCols = []
@@ -101,16 +105,19 @@ class DataManager():
         
         for i, v in enumerate(bools):
             if v:
-                segVals.append(counts[i])
+                if self.statBool:
+                    segVals.append(self.area[i])
+                else:
+                    segVals.append(counts[i])
                 segCols.append(self.c.segmentColors[i])
                 segLabels.append(nameList[i])
                     
         segCounts = list((counts[i] / self.currentSegCount) * 100 for i in range(6))
-        
+
         self.segLabels = segLabels
         self.segVals   = segVals
         self.segCols   = segCols
-        self.segCounts   = counts
+        self.segCounts = counts
 
     def deleteImgData(self):
         masterDict = self.fromJSON(self.fileName)
@@ -146,22 +153,25 @@ class DataManager():
                         self.imageDictionary[i['id']] = k
 
     def loadImage(self):
-        if self.imgDir == None:
+        if self.imgDir is None:
             imagePlot = np.dstack(self.hexToRGB(self.c.darkMode[3]))
             self.imagePlot = imagePlot
         else:
             try:
-                imgName = os.path.join(self.imgDir,os.path.relpath('img-' + self.currentImgId + '.jpg'))
+                imgName = os.path.join(self.imgDir, os.path.relpath('img-' + self.currentImgId + '.jpg'))
                 imagePlot = mtpltimg.imread(imgName)
             except FileNotFoundError as error:
-                imgName = os.path.join(self.imgDir,os.path.relpath('img-' + self.currentImgId + '.tif'))
+                imgName = os.path.join(self.imgDir, os.path.relpath('img-' + self.currentImgId + '.tif'))
                 imagePlot = mtpltimg.imread(imgName)
             self.imagePlot = imagePlot
                     
     def loadRLE(self):
         masterDict = self.fromJSON(self.fileName)
 
-        subDict = [] # masterDict["annotation"]
+        dictList = [subDict for subDict in masterDict["annotation"]]
+        self.area = [sum([label["area"] for label in dictList if label["category_id"] == i]) for i in range(5)]
+
+        subDict = []
         subDict.clear()
 
         try:
@@ -169,18 +179,17 @@ class DataManager():
             
             self.currentSegments = []
             categoryCountList = []
-                    
 
             self.getImgList()
 
             arraySize = subDict[0]["segmentation"]["size"]
             arraySize.append(3)
             
-            if self.statBool == True:
+            if self.statBool:
                 categoryCountList = [i['category_id'] for i in masterDict['annotation']]
                 self.currentSegCount = len(masterDict['annotation'])
                 self.statString = "Dataset"
-            elif self.statBool == False:
+            elif not self.statBool:
                 categoryCountList = [i['category_id'] for i in subDict]
                 self.currentSegCount = len(subDict)
                 self.statString = "Image"
@@ -325,7 +334,8 @@ class ButtonsLeft(tk.Frame):
         self.parent.Data.currentImgId = self.parent.Data.fromJSON(fileName)['images'][0]['id']
         self.parent.Data.fileName = fileName
         self.parent.ImageDisplay.updateImages()
-           
+
+
 class ButtonsCenter(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
@@ -373,7 +383,6 @@ class ButtonsCenter(tk.Frame):
         confirmWindow.config(bg=self.c.darkMode[3])
         confirmWindow.resizable(False,False)
 
-        
         confirmLabel = tk.Label(confirmWindow, text="Are you sure you want to delete the current image data?", highlightthickness=0, fg=self.c.darkMode[2], bg=self.c.darkMode[1])
         confirmLabel.grid(column=0, row=0, columnspan=2, pady=(10,10), padx=(10,10))
 
@@ -382,7 +391,8 @@ class ButtonsCenter(tk.Frame):
 
         returnButton = tk.Button(confirmWindow, text="No", highlightthickness=0, fg=self.c.darkMode[2], bg=self.c.darkMode[1] ,command=confirmWindow.destroy)
         returnButton.grid(column=1, row=1, pady=(10,20),padx=(0,50), sticky='nse')
-            
+
+
 class ButtonsRight(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
@@ -435,14 +445,14 @@ class ButtonsRight(tk.Frame):
         if imgDir != "":
             self.parent.Data.imgDir = imgDir
             self.parent.ImageDisplay.updateImages()
-        
+
     def getHelp(self):
         wb.open('https://github.com/CjMoor3/ArcCI-Collab-Repo/wiki/ViewCOCO')
         
     def nextSegment(self):
         index = 0
         
-        if self.parent.Data.currentSegmentID == None:
+        if self.parent.Data.currentSegmentID is None:
             self.parent.Data.currentSegmentID = self.parent.Data.currentSegments[0]
             self.categoryID = self.parent.Data.currentCatID
         else:
@@ -457,7 +467,7 @@ class ButtonsRight(tk.Frame):
     def prevSegment(self):
         index = 0
         
-        if self.parent.Data.currentSegmentID == None:
+        if self.parent.Data.currentSegmentID is None:
             self.parent.Data.currentSegmentID = self.parent.Data.currentSegments[-1]
             self.categoryID = self.parent.Data.currentCatID
         else:
@@ -583,7 +593,8 @@ class WindowClass(tk.Frame):
         self.ButtonsCenter.grid(row = 1, column = 1, sticky='WE')
         self.ButtonsRight = ButtonsRight(self)
         self.ButtonsRight.grid(row = 0, column = 2, rowspan = 3, sticky='NSE')
-            
+
+
 if __name__ == '__main__':
     root = tk.Tk()
     
