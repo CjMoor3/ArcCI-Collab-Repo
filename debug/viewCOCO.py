@@ -169,6 +169,7 @@ class DataManager:
         masterDict = self.fromJSON(self.fileName)
 
         dictList = [subDict for subDict in masterDict["annotation"]]
+        print(len(masterDict["images"]))
         self.area = [sum([label["area"] for label in dictList if label["category_id"] == i]) for i in range(5)]
 
         subDict = []
