@@ -8,7 +8,9 @@ class COCODataset:
     def __init__(self, fileName="ArcCI-TDS", tag="STD-2"):
         now = datetime.now()
         self.Data = {} # dictionary for data
-        self.fileName = fileName + f"-{tag}-" + now.strftime("%Y-%m-%d") + ".json"
+        self.fileName = os.path.relpath(fileName + f"-{tag}-" + now.strftime("%Y-%m-%d") + ".json")
+        self.version = tag
+        
         
         self.Data["images"]     = []
         self.Data["annotation"] = []
@@ -105,6 +107,25 @@ class COCODataset:
         # with open(fileName, 'w') as jsonObj:
         #     json.dump(masterDict, jsonObj, indent=4)
         #     jsonObj.close()
+        
+    def setFileName(self, input: str):
+        self.fileName = input
+        
+    def getSegmentCount(self):
+        return len(self.Data['annotation'])
+        
+    def getImgCount(self):
+        return len(self.Data['images'])
+    
+    def getCategoryCount(self):
+        return len(self.Data['categories'])
+        
+    
+    def __str__(self):
+        return \
+        f"Dataset version: {self.version}        Dataset Name: {self.fileName}\n" + \
+        f"# of Images: {self.getImgCount()}      # of Segments: {self.getSegmentCount}\n" + \
+        f"Average Segments/Image: {self.getImgCount()/self.getSegmentCount()}"
         
 
 
