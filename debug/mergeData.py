@@ -84,5 +84,6 @@ if __name__ == "__main__":
     masterDict = []
     for dir in args.dir:
         for file in os.listdir(dir):
-            masterDict.append(fromJSON(str(dir)+str(file)))
+            if file.endswith(".json"):
+                masterDict.append(fromJSON(str(dir)+str(file)))
     mergeData(masterDict)
