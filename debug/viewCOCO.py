@@ -93,12 +93,14 @@ class DataManager:
         self.parent.ImageDisplay.updateImages()
         
     def countCats(self, listParam):
+        print("countcats")
         # Count Vars
         segLabels = []
         segVals = []
         segCols = []
 
         counts = list(listParam.count(i) for i in range(6))
+        # print(counts)
         bools = list(counts[i] > 0 for i in range(6))
 
         nameList = ["Water", "Thin Ice", "Shadow", "Snow", "Sub Ice", "Melt Pond"]
@@ -112,8 +114,8 @@ class DataManager:
                 segCols.append(self.c.segmentColors[i])
                 segLabels.append(nameList[i])
                     
-        segCounts = list((counts[i] / self.currentSegCount) * 100 for i in range(6))
-
+        # segCounts = list((counts[i] / self.currentSegCount) * 100 for i in range(6))
+        
         self.segLabels = segLabels
         self.segVals   = segVals
         self.segCols   = segCols
@@ -174,87 +176,91 @@ class DataManager:
         subDict = []
         subDict.clear()
 
-        try:
-            subDict = [i for i in masterDict['annotation'] if i['image_id'] == self.currentImgId]
-            
-            self.currentSegments = []
-            categoryCountList = []
-
-            self.getImgList()
-
-            arraySize = subDict[0]["segmentation"]["size"]
-            arraySize.append(3)
-            
-            if self.statBool:
-                categoryCountList = [i['category_id'] for i in masterDict['annotation']]
-                self.currentSegCount = len(masterDict['annotation'])
-                self.statString = "Dataset"
-            elif not self.statBool:
-                categoryCountList = [i['category_id'] for i in subDict]
-                self.currentSegCount = len(subDict)
-                self.statString = "Image"
-
-            array = np.full(arraySize, 6)
-            categoryArray = np.full(arraySize[0:2], 6).flatten()
-            idNumArray = np.full(arraySize[0:2], 6).flatten()
-            
-            outlineSegment = None
-            
-            for i, count in enumerate(subDict):
-                if count["id"] == self.currentSegmentID:
-                    outlineSegment = count
+        # try:
+        subDict = [i for i in masterDict['annotation'] if i['image_id'] == self.currentImgId]
+        
+        self.currentSegments = []
+        categoryCountList = []
                 
-                self.currentSegments.append(count['id'])
-                
-                countList = count["segmentation"]["counts"]
-                
-                boolean = False
-                arrayIndex = 0
-                for indivCount in countList:
-                    if boolean:
-                        categoryArray[arrayIndex:arrayIndex+indivCount] = count["category_id"]
-                        idNumArray[arrayIndex:arrayIndex+indivCount] = count['id']
-                          
-                    arrayIndex += indivCount
-                    boolean = not boolean
-                    
-            if outlineSegment is not None:
-                boolean = False
-                arrayIndex = 0
-                for indivCount in outlineSegment["segmentation"]["counts"]:
-                    if boolean:
-                        for i in range(arrayIndex, arrayIndex+indivCount):
-                            try:
-                                if idNumArray[i-arraySize[0]] != outlineSegment["id"]:
-                                    categoryArray[i] = 7
-                                if idNumArray[i+arraySize[0]] != outlineSegment["id"]:
-                                    categoryArray[i] = 7
-                            except IndexError as error:
-                                pass
-                        categoryArray[arrayIndex] = 7
-                        if arrayIndex + indivCount < 65536:
-                            categoryArray[arrayIndex + indivCount] = 7
+
+        self.getImgList()
+
+        arraySize = subDict[0]["segmentation"]["size"]
+        arraySize.append(3)
+        
+        if self.statBool == True:
+            categoryCountList = [i['category_id'] for i in masterDict['annotation']]
+            # print(categoryCountList)
+            self.currentSegCount = sum(map(sum, [i['segmentation']['counts'] for i in masterDict['annotation']][::2])) #len(masterDict['annotation'])
+            self.statString = "Dataset"
+        elif self.statBool == False:
+            categoryCountList = [i['category_id'] for i in subDict]
+            # print(categoryCountList)
+            self.currentSegCount = sum(map(sum, [i['segmentation']['counts'] for i in subDict][::2]))#len(subDict) being used for volume/area now
+            self.statString = "Image"
+            
+        self.countCats(categoryCountList)
+        array = np.full(arraySize, 6)
+        categoryArray = np.full(arraySize[0:2], 6).flatten()
+        idNumArray = np.full(arraySize[0:2], 6).flatten()
+        
+        outlineSegment = None
+        
+        for i, count in enumerate(subDict):
+            if count["id"] == self.currentSegmentID:
+                outlineSegment = count
+            
+            self.currentSegments.append(count['id'])
+            
+            countList = count["segmentation"]["counts"]
+            
+            boolean = False
+            arrayIndex = 0
+            for indivCount in countList:
+                if boolean:
+                    categoryArray[arrayIndex:arrayIndex+indivCount] = count["category_id"]
+                    idNumArray[arrayIndex:arrayIndex+indivCount] = count['id']
                         
-                    arrayIndex += indivCount
-                    boolean = not boolean
+                arrayIndex += indivCount
+                boolean = not boolean
+                
+        if outlineSegment is not None:
+            boolean = False
+            arrayIndex = 0
+            for indivCount in outlineSegment["segmentation"]["counts"]:
+                if boolean:
+                    for i in range(arrayIndex, arrayIndex+indivCount):
+                        try:
+                            if idNumArray[i-arraySize[0]] != outlineSegment["id"]:
+                                categoryArray[i] = 7
+                            if idNumArray[i+arraySize[0]] != outlineSegment["id"]:
+                                categoryArray[i] = 7
+                        except IndexError as error:
+                            pass
+                    categoryArray[arrayIndex] = 7
+                    categoryArray[arrayIndex+indivCount] = 7
                     
-            categoryArray = np.reshape(categoryArray, (arraySize[0:2]))
-                    
-            self.idArray = np.reshape(idNumArray, arraySize[0:2])
-            self.countCats(categoryCountList)
-            
-            colorConverts = [self.hexToRGB(color) for color in self.c.segmentColors]
-            for y in range(arraySize[0]):
-                for x in range(arraySize[1]):
-                    colorList = colorConverts[int(categoryArray[x, y])]
-                    array[x, y] = colorList
+                arrayIndex += indivCount
+                boolean = not boolean
+                
+        categoryArray = np.reshape(categoryArray, (arraySize[0:2]))
+                
+        self.idArray = np.reshape(idNumArray, arraySize[0:2])
+        print('here')
+        
+        
+        colorConverts = [self.hexToRGB(color) for color in self.c.segmentColors]
+        for y in range(arraySize[0]):
+            for x in range(arraySize[1]):
+                colorList = colorConverts[int(categoryArray[x, y])]
+                array[x, y] = colorList
 
-            array = array.astype(dtype=np.uint8)
-            masterDict.clear()
-            subDict.clear()
-            return array
-        except TypeError:
-            return np.dstack(self.hexToRGB(self.c.darkMode[3]))
+        array = array.astype(dtype=np.uint8)
+        masterDict.clear()
+        subDict.clear()
+        return array
+        # except TypeError:
+        #     return np.dstack(self.hexToRGB(self.c.darkMode[3]))
         
     
 class ButtonsLeft(tk.Frame):
