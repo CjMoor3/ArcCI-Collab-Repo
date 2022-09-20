@@ -93,7 +93,6 @@ class DataManager:
         self.parent.ImageDisplay.updateImages()
         
     def countCats(self, listParam):
-        print("countcats")
         # Count Vars
         segLabels = []
         segVals = []
@@ -169,6 +168,7 @@ class DataManager:
                     
     def loadRLE(self):
         masterDict = self.fromJSON(self.fileName)
+        print(len(masterDict["images"]))
 
         dictList = [subDict for subDict in masterDict["annotation"]]
         self.area = [sum([label["area"] for label in dictList if label["category_id"] == i]) for i in range(5)]
@@ -246,7 +246,6 @@ class DataManager:
         categoryArray = np.reshape(categoryArray, (arraySize[0:2]))
                 
         self.idArray = np.reshape(idNumArray, arraySize[0:2])
-        print('here')
         
         
         colorConverts = [self.hexToRGB(color) for color in self.c.segmentColors]

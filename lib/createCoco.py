@@ -62,17 +62,11 @@ class COCODataset:
             self.Data = json.load(fileContent)
             fileContent.close()
             
-    def checkAnnotation(self, value1, value2, dict):
-        if not any(d['id'] == value1 and d['image_id'] == value2 for d in dict):
-                return True
-        else:
-            return False
+    def checkAnnotation(self, value1, value2):
+        return not any(d['id'] == value1 and d['image_id'] == value2 for d in self.Data["annotation"])
 
     def checkImage(self, value, dict):
-        if not any(d['id'] == value for d in dict):
-            return True
-        else:
-            return False
+        return not any(d['id'] == value for d in dict)
             
     def appendData(self, imgName=None, imgId=None, segList=None, 
                    trainingData=None, imgHeight=None, imgWidth=None):
@@ -85,25 +79,27 @@ class COCODataset:
                 'id': imgId
             })
             
-        for i in trainingData:
-            counts = i[0]
-            segID = i[1]
-            cat = i[2]
-            area = i[3]
-            segIdStatus = self.checkAnnotation(segID, imgId, self.Data['annotation'])
-            if cat != None and segIdStatus:
-                self.Data['annotation'].append({
-                    'id': segID,
-                    'image_id': imgId,
-                    'category_id': cat,
-                    'segmentation': {
-                                    'size': (imgWidth, imgHeight),
-                                    'counts': counts
-                                },
-                    'area': area,
-                    'bbox': segList,
-                    'iscrowd': 1
-                })
+            for i in trainingData:
+                counts = i[0]
+                segID = i[1]
+                cat = i[2]
+                area = i[3]
+                segIdStatus = self.checkAnnotation(segID, imgId)
+                if cat is not None and segIdStatus:
+                    self.Data['annotation'].append({
+                        'id': segID,
+                        'image_id': imgId,
+                        'category_id': cat,
+                        'segmentation': {
+                                        'size': (imgWidth, imgHeight),
+                                        'counts': counts
+                                    },
+                        'area': area,
+                        'bbox': segList,
+                        'iscrowd': 1
+                    })
+
+        self.storeData()
         # with open(fileName, 'w') as jsonObj:
         #     json.dump(masterDict, jsonObj, indent=4)
         #     jsonObj.close()
