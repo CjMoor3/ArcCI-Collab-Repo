@@ -18,8 +18,6 @@ class colors:
 
 class DataManager:
     def __init__(self, parent):
-        filetypes = [('json files', '*.json')]
-        self.fileName = fd.askopenfilename(title="Open TDS data file", filetypes=filetypes)
         self.parent = parent
         self.imgDir = None
         self.imageDictionary = {}
@@ -44,6 +42,9 @@ class DataManager:
         
         self.imagePlot = None
 
+        filetypes = [('json files', '*.json')]
+        self.fileName = fd.askopenfilename(title="Open TDS data file", filetypes=filetypes, parent=parent)
+
         if self.fileName == ():
             quit()
         else:
@@ -54,10 +55,8 @@ class DataManager:
 
         self.imageMaskArray = self.loadRLE()
 
-
     def hexToRGB(self, hexCode):
         return tuple(int(hexCode.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
-
 
     def fromJSON(self, fileName):
         try:    

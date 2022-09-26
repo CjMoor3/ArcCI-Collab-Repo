@@ -53,9 +53,9 @@ class COCODataset:
             self.loadData()
         
     def storeData(self):
-            with open(self.fileName, 'w') as outfile:
-                json.dump(self.Data, outfile, indent=4)
-                outfile.close()
+        with open(self.fileName, 'w') as outfile:
+            json.dump(self.Data, outfile, indent=4)
+            outfile.close()
         
     def loadData(self):
         with open(self.fileName, 'r') as fileContent:
@@ -134,10 +134,7 @@ class COCODataset:
 
 class createCOCO:
     def checkAnnotation(self, value1, value2, dict):
-        if not any(d['id'] == value1 and d['image_id'] == value2 for d in dict):
-                return True
-        else:
-            return False
+        return not any(d['id'] == value1 and d['image_id'] == value2 for d in dict)
 
     def checkImage(self, value, dict):
         if not any(d['id'] == value for d in dict):
