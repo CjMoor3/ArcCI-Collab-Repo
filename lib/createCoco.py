@@ -115,6 +115,9 @@ class COCODataset:
     
     def getCategoryCount(self):
         return len(self.Data['categories'])
+    
+    def getIdList(self):
+        return [elem['id'] for elem in self.Data['images']]
         
     
     def __str__(self):
